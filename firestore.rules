@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+    }
+
+    function isStaff() {
+      return isSignedIn() && userRole() in ['chef_partner', 'gerente', 'admin'];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userRole() == 'admin';
+    }
+
+    // --- usuarios ---
+    // Cada cliente lee/escribe su propio doc. Staff puede leer cualquiera.
+    // Solo admin puede listar a todos. El conteo de sellos lo mutan las
+    // API routes con Admin SDK (saltan estas reglas), no el cliente directo.
+    match /usuarios/{uid} {
+      allow get: if isSelf(uid) || isStaff();
+      allow list: if isSignedIn() && userRole() in ['gerente', 'admin'];
+      allow create: if isSelf(uid);
+      allow update: if isSelf(uid) || isAdmin();
+      allow delete: if isAdmin();
+
+      match /notificaciones/{notifId} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+
+    // --- premios: lectura pública para clientes logueados, escritura solo admin ---
+    match /premios/{premioId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // --- pending_stamps: el cliente crea el suyo; staff/admin confirman ---
+    match /pending_stamps/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isStaff();
+    }
+
+    // --- canjes: cliente lee/crea los suyos; staff lee todos y marca redeemed ---
+    match /canjes/{id} {
+      allow read: if isSignedIn() &&
+        (isStaff() || resource.data.clienteId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.clienteId == request.auth.uid;
+      allow update: if isStaff() || (isSignedIn() && resource.data.clienteId == request.auth.uid);
+    }
+
+    // --- logs: append-only. Cliente autenticado puede crear (escaneo directo) y
+    // leer los suyos; nadie edita/borra; admin lee todos. El Admin SDK ignora estas reglas. ---
+    match /system_logs/{id} {
+      allow read: if isStaff() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // --- vendors (locales del multitenant): lectura pública, escritura admin ---
+    match /vendors/{vendorId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

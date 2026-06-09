@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Marfil arroz muy claro */
+    --background: 40 100% 99%;
+    --foreground: 20 14% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 12%;
+
+    /* Rojo lacado japonés #C41E3A */
+    --primary: 350 73% 44%;
+    --primary-foreground: 40 60% 97%;
+
+    /* Marfil arroz #F5E6C8 */
+    --secondary: 40 60% 87%;
+    --secondary-foreground: 120 24% 18%;
+
+    --muted: 40 30% 93%;
+    --muted-foreground: 25 8% 42%;
+
+    /* Verde wasabi #2D4A2D */
+    --accent: 120 24% 23%;
+    --accent-foreground: 40 60% 94%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 40 60% 97%;
+
+    /* Dorado sello #D4AF37 */
+    --gold: 46 65% 52%;
+    --gold-foreground: 20 14% 12%;
+
+    --border: 40 25% 86%;
+    --input: 40 25% 86%;
+    --ring: 350 73% 44%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 20 14% 8%;
+    --foreground: 40 60% 96%;
+    --card: 20 14% 11%;
+    --card-foreground: 40 60% 96%;
+    --popover: 20 14% 11%;
+    --popover-foreground: 40 60% 96%;
+    --primary: 350 73% 50%;
+    --primary-foreground: 40 60% 97%;
+    --secondary: 120 24% 23%;
+    --secondary-foreground: 40 60% 94%;
+    --muted: 20 14% 18%;
+    --muted-foreground: 40 20% 65%;
+    --accent: 120 24% 28%;
+    --accent-foreground: 40 60% 94%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 40 60% 97%;
+    --gold: 46 65% 55%;
+    --gold-foreground: 20 14% 8%;
+    --border: 20 14% 22%;
+    --input: 20 14% 22%;
+    --ring: 350 73% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-playfair), Georgia, serif;
+  }
+}
+
+/* Fondo oscuro decorativo para la punch card */
+.bg-nigiri-dark {
+  background-color: hsl(20 14% 10%);
+  background-image: radial-gradient(
+      circle at 20% 30%,
+      hsl(350 73% 44% / 0.18) 0,
+      transparent 35%
+    ),
+    radial-gradient(circle at 85% 70%, hsl(46 65% 52% / 0.12) 0, transparent 40%);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
