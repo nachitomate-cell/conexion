@@ -16,11 +16,15 @@ service cloud.firestore {
     }
 
     function isStaff() {
-      return isSignedIn() && userRole() in ['chef_partner', 'gerente', 'admin'];
+      return isSignedIn() && userRole() in ['chef_partner', 'gerente', 'admin', 'superadmin'];
     }
 
     function isAdmin() {
-      return isSignedIn() && userRole() == 'admin';
+      return isSignedIn() && userRole() in ['admin', 'superadmin'];
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && userRole() == 'superadmin';
     }
 
     // --- usuarios ---
@@ -29,7 +33,7 @@ service cloud.firestore {
     // API routes con Admin SDK (saltan estas reglas), no el cliente directo.
     match /usuarios/{uid} {
       allow get: if isSelf(uid) || isStaff();
-      allow list: if isSignedIn() && userRole() in ['gerente', 'admin'];
+      allow list: if isSignedIn() && userRole() in ['gerente', 'admin', 'superadmin'];
       allow create: if isSelf(uid);
       allow update: if isSelf(uid) || isAdmin();
       allow delete: if isAdmin();
@@ -39,9 +43,9 @@ service cloud.firestore {
       }
     }
 
-    // --- premios: lectura pública para clientes logueados, escritura solo admin ---
+    // --- premios: catálogo público (se puede ver sin sesión), escritura solo admin ---
     match /premios/{premioId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
@@ -71,7 +75,7 @@ service cloud.firestore {
 
     // --- vendors (locales del multitenant): lectura pública, escritura admin ---
     match /vendors/{vendorId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
   }

@@ -1,6 +1,5 @@
 "use client";
 
-import { RequireAuth } from "@/components/RequireAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCLP } from "@/lib/utils";
@@ -56,7 +55,7 @@ const MENU: Categoria[] = [
   },
 ];
 
-function MenuInner() {
+export default function MenuPage() {
   const vendor = getDefaultVendor();
   const wspMsg = encodeURIComponent(
     `¡Hola ${vendor.nombre}! Quiero hacer un pedido 🍣`
@@ -112,13 +111,5 @@ function MenuInner() {
         </a>
       </Button>
     </div>
-  );
-}
-
-export default function MenuPage() {
-  return (
-    <RequireAuth roles={["cliente"]}>
-      <MenuInner />
-    </RequireAuth>
   );
 }

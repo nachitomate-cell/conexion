@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Logo } from "@/components/Logo";
+import { Logo, Wordmark } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 
 function authError(code: string): string {
@@ -118,9 +118,10 @@ function UneteInner() {
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-secondary/40 to-background px-5 py-10">
       <div className="mb-6 flex flex-col items-center text-center">
         <Logo size={72} />
-        <h1 className="mt-4 font-headline text-3xl font-bold">
-          SushiPro <span className="text-primary">Club</span>
-        </h1>
+        <Wordmark className="mt-4 text-3xl" />
+        <p className="font-headline text-sm font-bold uppercase tracking-[0.35em] text-muted-foreground">
+          Club
+        </p>
         <p className="mt-1 max-w-xs text-sm text-muted-foreground">
           Junta sellos con cada pedido y canjea rolls, postres y premios
           exclusivos. 🍣🥢

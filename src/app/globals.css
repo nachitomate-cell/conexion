@@ -4,67 +4,67 @@
 
 @layer base {
   :root {
-    /* Marfil arroz muy claro */
-    --background: 40 100% 99%;
-    --foreground: 20 14% 12%;
+    /* Blanco con un matiz frío casi imperceptible */
+    --background: 252 30% 99%;
+    --foreground: 240 12% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 14% 12%;
+    --card-foreground: 240 12% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 12%;
+    --popover-foreground: 240 12% 9%;
 
-    /* Rojo lacado japonés #C41E3A */
-    --primary: 350 73% 44%;
-    --primary-foreground: 40 60% 97%;
+    /* Lavanda / violeta del logo (el punto de SUSHI PRO●) */
+    --primary: 252 30% 62%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Marfil arroz #F5E6C8 */
-    --secondary: 40 60% 87%;
-    --secondary-foreground: 120 24% 18%;
+    /* Tinte lavanda muy claro */
+    --secondary: 252 38% 95%;
+    --secondary-foreground: 240 12% 12%;
 
-    --muted: 40 30% 93%;
-    --muted-foreground: 25 8% 42%;
+    --muted: 250 24% 95%;
+    --muted-foreground: 240 6% 44%;
 
-    /* Verde wasabi #2D4A2D */
-    --accent: 120 24% 23%;
-    --accent-foreground: 40 60% 94%;
+    /* "Tinta" negra como acento de alto contraste (botones secundarios fuertes) */
+    --accent: 240 12% 10%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 45%;
-    --destructive-foreground: 40 60% 97%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Dorado sello #D4AF37 */
-    --gold: 46 65% 52%;
-    --gold-foreground: 20 14% 12%;
+    /* Violeta profundo para el tier VIP / premios (token "gold" reutilizado) */
+    --gold: 258 44% 58%;
+    --gold-foreground: 0 0% 100%;
 
-    --border: 40 25% 86%;
-    --input: 40 25% 86%;
-    --ring: 350 73% 44%;
+    --border: 250 22% 90%;
+    --input: 250 22% 90%;
+    --ring: 252 30% 62%;
 
-    --radius: 0.75rem;
+    --radius: 0.9rem;
   }
 
   .dark {
-    --background: 20 14% 8%;
-    --foreground: 40 60% 96%;
-    --card: 20 14% 11%;
-    --card-foreground: 40 60% 96%;
-    --popover: 20 14% 11%;
-    --popover-foreground: 40 60% 96%;
-    --primary: 350 73% 50%;
-    --primary-foreground: 40 60% 97%;
-    --secondary: 120 24% 23%;
-    --secondary-foreground: 40 60% 94%;
-    --muted: 20 14% 18%;
-    --muted-foreground: 40 20% 65%;
-    --accent: 120 24% 28%;
-    --accent-foreground: 40 60% 94%;
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 40 60% 97%;
-    --gold: 46 65% 55%;
-    --gold-foreground: 20 14% 8%;
-    --border: 20 14% 22%;
-    --input: 20 14% 22%;
-    --ring: 350 73% 50%;
+    --background: 250 16% 7%;
+    --foreground: 252 30% 96%;
+    --card: 250 16% 10%;
+    --card-foreground: 252 30% 96%;
+    --popover: 250 16% 10%;
+    --popover-foreground: 252 30% 96%;
+    --primary: 252 38% 68%;
+    --primary-foreground: 240 16% 8%;
+    --secondary: 250 16% 18%;
+    --secondary-foreground: 252 30% 94%;
+    --muted: 250 16% 18%;
+    --muted-foreground: 250 12% 66%;
+    --accent: 252 38% 68%;
+    --accent-foreground: 240 16% 8%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --gold: 258 44% 64%;
+    --gold-foreground: 240 16% 8%;
+    --border: 250 16% 22%;
+    --input: 250 16% 22%;
+    --ring: 252 38% 68%;
   }
 }
 
@@ -79,19 +79,26 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-playfair), Georgia, serif;
+    font-family: var(--font-archivo), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  /* Títulos principales (h1) en mayúsculas pesadas, fiel al logo */
+  h1 {
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    font-weight: 800;
   }
 }
 
-/* Fondo oscuro decorativo para la punch card */
+/* Fondo oscuro decorativo para la punch card (tinta + brillo lavanda) */
 .bg-nigiri-dark {
-  background-color: hsl(20 14% 10%);
+  background-color: hsl(248 18% 11%);
   background-image: radial-gradient(
-      circle at 20% 30%,
-      hsl(350 73% 44% / 0.18) 0,
-      transparent 35%
+      circle at 18% 22%,
+      hsl(252 40% 62% / 0.28) 0,
+      transparent 42%
     ),
-    radial-gradient(circle at 85% 70%, hsl(46 65% 52% / 0.12) 0, transparent 40%);
+    radial-gradient(circle at 88% 80%, hsl(258 44% 58% / 0.22) 0, transparent 45%);
 }
 
 .no-scrollbar::-webkit-scrollbar {

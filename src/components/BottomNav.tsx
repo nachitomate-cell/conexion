@@ -34,10 +34,11 @@ function navFor(rol: Rol | null): NavItem[] | null {
 }
 
 export function BottomNav() {
-  const { rol, firebaseUser } = useAuth();
+  const { rol } = useAuth();
   const pathname = usePathname();
 
-  if (!firebaseUser) return null;
+  // Sin sesión mostramos la navegación de cliente (las acciones que requieren
+  // cuenta redirigen a /unete por su propio guard).
   const items = navFor(rol);
   if (!items) return null;
 

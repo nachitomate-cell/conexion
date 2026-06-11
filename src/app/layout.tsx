@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans, Playfair_Display } from "next/font/google";
+import { Noto_Sans, Archivo } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { AppShell } from "@/components/AppShell";
@@ -7,14 +7,15 @@ import { AppShell } from "@/components/AppShell";
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
   subsets: ["latin"],
-  weight: ["400", "600", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+// Grotesca pesada para titulares (estética del logo SUSHI PRO).
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#C41E3A",
+  themeColor: "#877AB8",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -49,7 +50,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-CL" className={`${notoSans.variable} ${playfair.variable}`}>
+    <html lang="es-CL" className={`${notoSans.variable} ${archivo.variable}`}>
       <body className="min-h-dvh bg-background font-sans antialiased">
         <Providers>
           <AppShell>{children}</AppShell>

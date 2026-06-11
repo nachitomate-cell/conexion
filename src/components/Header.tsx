@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { Logo } from "@/components/Logo";
+import { Logo, Wordmark } from "@/components/Logo";
 
 export function Header() {
   const { firebaseUser } = useAuth();
@@ -34,12 +34,10 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <Logo size={32} />
-          <span className="font-headline text-lg font-bold tracking-tight">
-            SushiPro <span className="text-primary">Club</span>
-          </span>
+          <Wordmark className="text-lg" />
         </Link>
 
-        {firebaseUser && (
+        {firebaseUser ? (
           <Link
             href="/notificacion"
             className="relative rounded-full p-2 text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
@@ -51,6 +49,13 @@ export function Header() {
                 {noLeidas > 9 ? "9+" : noLeidas}
               </span>
             )}
+          </Link>
+        ) : (
+          <Link
+            href="/unete"
+            className="rounded-full bg-foreground px-4 py-1.5 text-sm font-bold text-background transition-colors hover:bg-foreground/90"
+          >
+            Entrar
           </Link>
         )}
       </div>

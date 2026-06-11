@@ -37,7 +37,8 @@ export async function requireUser(
   if (!snap.exists) throw new AuthError("Usuario no encontrado.", 403);
   const rol = (snap.data()?.rol as Rol) || "cliente";
 
-  if (roles && !roles.includes(rol)) {
+  // El superadmin es operador de plataforma: pasa cualquier control de rol.
+  if (roles && rol !== "superadmin" && !roles.includes(rol)) {
     throw new AuthError("No tienes permiso para esta acción.", 403);
   }
 

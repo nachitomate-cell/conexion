@@ -20,13 +20,13 @@ export function AIInsightsPanel({
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl border border-primary/30 p-5 text-white shadow-lg",
-        "bg-gradient-to-br from-[#3a0a12] via-[#5a0f1c] to-[#2a060c]",
+        "bg-gradient-to-br from-[#1f1b33] via-[#2c2550] to-[#16131f]",
         className
       )}
     >
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/20">
-          <Sparkles className="h-4 w-4 text-gold" />
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
+          <Sparkles className="h-4 w-4 text-[#c3b6ec]" />
         </span>
         <h3 className="font-headline text-base font-bold">{title}</h3>
       </div>
@@ -40,7 +40,7 @@ export function AIInsightsPanel({
         <ul className="space-y-2">
           {insights.map((ins, i) => (
             <li key={i} className="flex gap-2 text-sm text-white/90">
-              <span className="text-gold">✦</span>
+              <span className="text-[#c3b6ec]">✦</span>
               <span>{ins}</span>
             </li>
           ))}

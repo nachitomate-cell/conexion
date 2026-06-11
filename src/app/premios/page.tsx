@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
 import {
   collection,
@@ -10,7 +11,6 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { RequireAuth } from "@/components/RequireAuth";
 import { PremioCard } from "@/components/PremioCard";
 import { RangoBadge } from "@/components/RangoBadge";
 import {
@@ -27,9 +27,10 @@ import { canjearPremio } from "@/lib/puntos";
 import { buildCanjeQRValue, getDefaultVendor } from "@/lib/vendors";
 import type { Premio } from "@/types";
 
-function PremiosInner() {
-  const { usuario } = useAuth();
+export default function PremiosPage() {
+  const { usuario, firebaseUser } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const vendor = getDefaultVendor();
   const [premios, setPremios] = useState<Premio[] | null>(null);
   const [canjeandoId, setCanjeandoId] = useState<string | null>(null);
@@ -61,6 +62,14 @@ function PremiosInner() {
   const sellos = usuario?.sellos ?? 0;
 
   const handleCanjear = async (premio: Premio) => {
+    if (!firebaseUser) {
+      toast({
+        title: "Inicia sesión para canjear",
+        description: "Crea tu cuenta gratis y empieza a juntar sellos.",
+      });
+      router.push("/unete");
+      return;
+    }
     setCanjeandoId(premio.id);
     const res = await canjearPremio(premio.id);
     setCanjeandoId(null);
@@ -146,13 +155,5 @@ function PremiosInner() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-export default function PremiosPage() {
-  return (
-    <RequireAuth roles={["cliente"]}>
-      <PremiosInner />
-    </RequireAuth>
   );
 }
