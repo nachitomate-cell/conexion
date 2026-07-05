@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { Logo, Wordmark } from "@/components/Logo";
+import { useVendor } from "@/context/VendorContext";
 
 export function Header() {
   const { firebaseUser } = useAuth();
+  const vendor = useVendor();
   const [noLeidas, setNoLeidas] = useState(0);
 
   useEffect(() => {
@@ -32,9 +33,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Logo size={32} />
-          <Wordmark className="text-lg" />
+        <Link href="/" className="flex items-center" aria-label={vendor.nombre}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={vendor.theme.logoUrl}
+            alt={vendor.nombre}
+            width={vendor.theme.logoWidth}
+            height={32}
+            className="h-8 w-auto"
+          />
         </Link>
 
         {firebaseUser ? (

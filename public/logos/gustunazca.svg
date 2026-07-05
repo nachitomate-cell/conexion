@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 60" width="340" height="60" role="img" aria-label="Gustu Nazca">
+  <style>
+    .wm { font-family: 'Archivo', 'Georgia', 'Segoe UI', system-ui, sans-serif; font-weight: 900; letter-spacing: 0.5px; }
+    .g { font-size: 40px; }
+    .n { font-size: 26px; letter-spacing: 3px; }
+  </style>
+  <text x="0" y="38" class="wm g" fill="#991b1b">GUSTU</text>
+  <text x="140" y="38" class="wm g" fill="#0a0a0a">NAZCA</text>
+  <circle cx="325" cy="30" r="7" fill="#e2a13d"/>
+  <text x="0" y="56" class="wm n" fill="#0a0a0a">COCINA PERUANA</text>
+</svg>

@@ -24,14 +24,104 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { canjearPremio } from "@/lib/puntos";
-import { buildCanjeQRValue, getDefaultVendor } from "@/lib/vendors";
+import { buildCanjeQRValue } from "@/lib/vendors";
+import { useVendor } from "@/context/VendorContext";
 import type { Premio } from "@/types";
+
+// Vista previa que se muestra mientras la colección `premios` esté vacía.
+// En cuanto el admin crea el primer premio real desde /admin, desaparece.
+// Cada tenant define su propio set; si no está mapeado se usa el de SushiPro.
+const DEMO_POR_VENDOR: Record<string, Omit<Premio, "vendorId">[]> = {
+  sushipro: [
+    {
+      id: "__demo_gyozas",
+      nombre: "Gyozas de Cerdo",
+      icono: "🥟",
+      descripcion: "5 unidades recién hechas, salsa ponzu de la casa.",
+      sellosRequeridos: 5,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_roll",
+      nombre: "Roll a elección (8 cortes)",
+      icono: "🍣",
+      descripcion: "Elige cualquier roll clásico de la carta.",
+      sellosRequeridos: 10,
+      stock: 999,
+      activo: true,
+    },
+  ],
+  nenecurauma: [
+    {
+      id: "__demo_schop",
+      nombre: "Schop Cerveza Cusqueña",
+      icono: "🍺",
+      descripcion: "Schop pilsener 500cc bien helado.",
+      sellosRequeridos: 6,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_piscola",
+      nombre: "Piscola Mistral 35°",
+      icono: "🥃",
+      descripcion: "Piscola clásica con Mistral 35° y bebida.",
+      sellosRequeridos: 8,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_burger",
+      nombre: "Burger Chancharteria",
+      icono: "🍔",
+      descripcion: "Doble mechada, cheddar y salsa de la casa.",
+      sellosRequeridos: 12,
+      stock: 999,
+      activo: true,
+    },
+  ],
+  gustunazca: [
+    {
+      id: "__demo_piscosour",
+      nombre: "Pisco Sour Catedral",
+      icono: "🍹",
+      descripcion: "Pisco quebranta, limón sutil y clara batida.",
+      sellosRequeridos: 6,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_ceviche",
+      nombre: "Ceviche Clásico",
+      icono: "🐟",
+      descripcion: "Pescado del día, cebolla morada, ají limo y camote.",
+      sellosRequeridos: 10,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_lomo",
+      nombre: "Lomo Saltado",
+      icono: "🍛",
+      descripcion: "Lomo salteado al wok con papas fritas y arroz graneado.",
+      sellosRequeridos: 12,
+      stock: 999,
+      activo: true,
+    },
+  ],
+};
+
+function demoPremios(vendorId: string): Premio[] {
+  const list = DEMO_POR_VENDOR[vendorId] ?? DEMO_POR_VENDOR.sushipro;
+  return list.map((p) => ({ ...p, vendorId }));
+}
 
 export default function PremiosPage() {
   const { usuario, firebaseUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const vendor = getDefaultVendor();
+  const vendor = useVendor();
   const [premios, setPremios] = useState<Premio[] | null>(null);
   const [canjeandoId, setCanjeandoId] = useState<string | null>(null);
   const [voucher, setVoucher] = useState<{
@@ -85,6 +175,8 @@ export default function PremiosPage() {
   };
 
   const ordenados = useMemo(() => premios ?? [], [premios]);
+  const esVistaPrevia = premios !== null && ordenados.length === 0;
+  const paraMostrar = esVistaPrevia ? demoPremios(vendor.id) : ordenados;
 
   return (
     <div className="space-y-5">
@@ -105,19 +197,22 @@ export default function PremiosPage() {
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-28 w-full" />
         </div>
-      ) : ordenados.length === 0 ? (
-        <div className="rounded-2xl border border-dashed p-8 text-center text-muted-foreground">
-          <p className="text-4xl">🍱</p>
-          <p className="mt-2">Aún no hay premios publicados. ¡Vuelve pronto!</p>
-        </div>
       ) : (
         <div className="space-y-3">
-          {ordenados.map((p) => (
+          {esVistaPrevia && (
+            <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
+              <span className="font-semibold">🍱 Vista previa</span>
+              <span className="text-primary/80">
+                Aún no hay premios publicados. Crea los reales desde /admin.
+              </span>
+            </div>
+          )}
+          {paraMostrar.map((p) => (
             <PremioCard
               key={p.id}
               premio={p}
               sellosActuales={sellos}
-              onCanjear={handleCanjear}
+              onCanjear={esVistaPrevia ? undefined : handleCanjear}
               loading={canjeandoId === p.id}
             />
           ))}

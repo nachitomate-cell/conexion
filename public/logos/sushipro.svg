@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60" width="300" height="60" role="img" aria-label="SUSHIPRO">
+  <style>
+    .wm { font-family: 'Archivo', 'Segoe UI', system-ui, sans-serif; font-weight: 900; font-size: 44px; letter-spacing: -1.5px; }
+  </style>
+  <text x="0" y="44" class="wm" fill="#1a1521">SUSHIPRO</text>
+  <circle cx="260" cy="38" r="9" fill="#877AB8"/>
+</svg>

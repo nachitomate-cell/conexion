@@ -22,7 +22,8 @@ import { AIPromoButton } from "@/components/AIPromoButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getDefaultVendor, buildVendorQRValue } from "@/lib/vendors";
+import { buildVendorQRValue } from "@/lib/vendors";
+import { useVendor } from "@/context/VendorContext";
 import type { SystemLog } from "@/types";
 
 function startOfToday(): number {
@@ -35,7 +36,7 @@ function VendedorInner() {
   const { usuario } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const vendor = getDefaultVendor();
+  const vendor = useVendor();
 
   const tabParam = params.get("tab");
   const tab = tabParam === "scan" || tabParam === "clientes" ? tabParam : "resumen";

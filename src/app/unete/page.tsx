@@ -10,12 +10,12 @@ import {
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useVendor } from "@/context/VendorContext";
 import { rolInicial, homeForRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Logo, Wordmark } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 
 function authError(code: string): string {
@@ -38,7 +38,8 @@ function authError(code: string): string {
 function UneteInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const { firebaseUser, usuario, loading } = useAuth();
+  const { firebaseUser, usuario, loading, permissionError } = useAuth();
+  const vendor = useVendor();
   const { toast } = useToast();
   const [tab, setTab] = useState("login");
   const [busy, setBusy] = useState(false);
@@ -103,7 +104,7 @@ function UneteInner() {
       });
       toast({
         variant: "success",
-        title: "¡Bienvenido al club! 🍣",
+        title: `¡Bienvenido al club! ${vendor.copy.emojis}`,
         description: "Tu primera tarjeta de sellos te espera.",
       });
     } catch (err) {
@@ -117,16 +118,36 @@ function UneteInner() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-secondary/40 to-background px-5 py-10">
       <div className="mb-6 flex flex-col items-center text-center">
-        <Logo size={72} />
-        <Wordmark className="mt-4 text-3xl" />
-        <p className="font-headline text-sm font-bold uppercase tracking-[0.35em] text-muted-foreground">
-          Club
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={vendor.theme.logoUrl}
+          alt={vendor.nombre}
+          width={vendor.theme.logoWidth * 1.4}
+          height={64}
+          className="h-16 w-auto"
+        />
+        <p className="mt-3 font-headline text-sm font-bold uppercase tracking-[0.35em] text-muted-foreground">
+          {vendor.copy.clubName}
         </p>
-        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-          Junta sellos con cada pedido y canjea rolls, postres y premios
-          exclusivos. 🍣🥢
+        <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+          {vendor.copy.joinDescription} {vendor.copy.emojis}
         </p>
       </div>
+
+      {permissionError && firebaseUser && (
+        <div className="mb-4 w-full max-w-sm rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+          <p className="font-semibold">Firestore está rechazando la lectura de tu perfil.</p>
+          <p className="mt-1 opacity-80">
+            Las reglas del proyecto no están permitiendo leer/crear{" "}
+            <code className="rounded bg-destructive/20 px-1">usuarios/{firebaseUser.uid.slice(0, 8)}…</code>.
+            El dueño del proyecto debe correr{" "}
+            <code className="rounded bg-destructive/20 px-1">
+              firebase deploy --only firestore:rules
+            </code>
+            .
+          </p>
+        </div>
+      )}
 
       <div className="w-full max-w-sm rounded-2xl border bg-card p-5 shadow-sm">
         <Tabs value={tab} onValueChange={setTab}>
@@ -159,8 +180,13 @@ function UneteInner() {
                   placeholder="••••••••"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? "Entrando…" : "Entrar 🍣"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={busy}
+                style={{ backgroundColor: vendor.theme.primaryColor }}
+              >
+                {busy ? "Entrando…" : `Entrar ${vendor.copy.emojis.slice(0, 2)}`}
               </Button>
             </form>
           </TabsContent>
@@ -221,7 +247,12 @@ function UneteInner() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={busy}
+                style={{ backgroundColor: vendor.theme.primaryColor }}
+              >
                 {busy ? "Creando…" : "Crear mi cuenta 🎉"}
               </Button>
             </form>

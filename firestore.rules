@@ -11,35 +11,49 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Guard defensivo: si el doc del usuario aún NO existe (usuario recién
+    // autenticado que todavía no fue aprovisionado), userRole() devuelve null
+    // en vez de tirar denial en cadena. Esto es clave en el flujo multitenant:
+    // permite que el propio usuario cree su doc por primera vez.
+    function userDocExists() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
     function userRole() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+      return userDocExists()
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol
+        : null;
     }
 
     function isStaff() {
-      return isSignedIn() && userRole() in ['chef_partner', 'gerente', 'admin', 'superadmin'];
+      return userRole() in ['chef_partner', 'gerente', 'admin', 'superadmin'];
     }
 
     function isAdmin() {
-      return isSignedIn() && userRole() in ['admin', 'superadmin'];
+      return userRole() in ['admin', 'superadmin'];
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && userRole() == 'superadmin';
+      return userRole() == 'superadmin';
     }
 
-    // --- usuarios ---
-    // Cada cliente lee/escribe su propio doc. Staff puede leer cualquiera.
-    // Solo admin puede listar a todos. El conteo de sellos lo mutan las
-    // API routes con Admin SDK (saltan estas reglas), no el cliente directo.
-    match /usuarios/{uid} {
-      allow get: if isSelf(uid) || isStaff();
+    // --- usuarios (modelo GLOBAL: 1 doc por Firebase UID, cross-tenant) ---
+    // El propio usuario siempre puede leer y escribir SU propio doc — esta
+    // es la regla base que resuelve el flujo de login/auto-provisioning.
+    // Encima se agregan los permisos operativos de staff/admin.
+    match /usuarios/{userId} {
+      // Regla base: usuario autenticado ↔ su propio doc.
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Permisos adicionales de personal del local (se combinan con OR).
+      allow get: if isStaff();
       allow list: if isSignedIn() && userRole() in ['gerente', 'admin', 'superadmin'];
-      allow create: if isSelf(uid);
-      allow update: if isSelf(uid) || isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
 
       match /notificaciones/{notifId} {
-        allow read, write: if isSelf(uid);
+        allow read, write: if isSelf(userId);
       }
     }
 

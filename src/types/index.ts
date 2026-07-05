@@ -103,6 +103,47 @@ export interface Notificacion {
   cta?: string;
 }
 
+/**
+ * Identidad visual del tenant. Combina:
+ *   - hex (para `style={{}}` inline en superficies que Tailwind purga mal)
+ *   - HSL triplet (para inyectar como CSS variables sobre los tokens shadcn)
+ *   - assets de logo
+ */
+export interface VendorTheme {
+  primaryColor: string; // hex, ej. "#991b1b"
+  primaryHsl: string; // HSL triplet, ej. "358 62% 42%"
+  primaryForegroundHsl?: string;
+  accentHsl?: string;
+  accentForegroundHsl?: string;
+  goldHsl?: string;
+  goldForegroundHsl?: string;
+  logoUrl: string; // ruta relativa o URL absoluta
+  logoWidth: number; // px, alto se calcula por ratio del SVG
+}
+
+/** Copies white-label del tenant. */
+export interface VendorCopy {
+  clubName: string; // ej. "NENE CLUB", "SUSHIPRO CLUB"
+  joinDescription: string; // frase corta para /unete y hero
+  emojis: string; // string de emojis temáticos, ej. "🍔🍻"
+}
+
+/** Item del menú digital, guardado en Firestore por tenant. */
+export interface MenuItem {
+  id: string;
+  vendorId: string;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  emoji?: string;
+  categoria: string;
+  activo: boolean;
+  orden?: number;
+}
+
+/** Etapa comercial del tenant dentro del pipeline de la plataforma. */
+export type VendorStatus = "propuesta" | "por_presentar" | "funcionando";
+
 /** Local/comercio dentro del multitenant. */
 export interface Vendor {
   id: string;
@@ -113,4 +154,8 @@ export interface Vendor {
   emoji: string;
   sellosParaPremio: number; // tamaño de la punch card (ej 10)
   activo: boolean;
+  /** Etapa en el pipeline (propuesta → por_presentar → funcionando). */
+  status: VendorStatus;
+  theme: VendorTheme;
+  copy: VendorCopy;
 }

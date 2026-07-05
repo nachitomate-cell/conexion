@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getDefaultVendor } from "@/lib/vendors";
+import { useVendor } from "@/context/VendorContext";
 import type { Premio } from "@/types";
 
 const VACIO = {
@@ -41,7 +41,7 @@ const VACIO = {
 
 function PremiosAdminInner() {
   const { toast } = useToast();
-  const vendor = getDefaultVendor();
+  const vendor = useVendor();
   const [premios, setPremios] = useState<Premio[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);

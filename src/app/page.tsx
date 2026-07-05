@@ -10,10 +10,9 @@ import { RangoBadge } from "@/components/RangoBadge";
 import { PremioCard } from "@/components/PremioCard";
 import { NotifBanner } from "@/components/NotifBanner";
 import { MediaSlot } from "@/components/MediaSlot";
-import { Wordmark } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { getDefaultVendor } from "@/lib/vendors";
-import { BANNERS, GALERIA, type AccionBanner } from "@/lib/contenidoHome";
+import { useVendor } from "@/context/VendorContext";
+import { GALERIA } from "@/lib/contenidoHome";
 import type { Premio } from "@/types";
 
 function saludo(): string {
@@ -61,7 +60,7 @@ function SectionHeader({
 export default function HomePage() {
   const { usuario } = useAuth();
   const logueado = !!usuario;
-  const vendor = getDefaultVendor();
+  const vendor = useVendor();
   const [destacados, setDestacados] = useState<Premio[]>([]);
 
   useEffect(() => {
@@ -89,15 +88,7 @@ export default function HomePage() {
     `¡Hola ${vendor.nombre}! Quiero hacer un pedido / reservar 🍣`
   )}`;
   const igUrl = `https://instagram.com/${vendor.instagram}`;
-
-  const hrefFor = (a: AccionBanner) =>
-    a === "wsp"
-      ? wsp
-      : a === "premios"
-        ? "/premios"
-        : a === "menu"
-          ? "/menu"
-          : "/unete";
+  const emojiHola = vendor.copy.emojis.slice(0, 2) || vendor.emoji;
 
   return (
     <div className="animate-fade-up space-y-8 pb-4">
@@ -109,69 +100,46 @@ export default function HomePage() {
               {saludo()}
             </p>
             <h1 className="font-headline text-2xl font-extrabold leading-tight">
-              {usuario!.nombre.split(" ")[0]} 🍣
+              {usuario!.nombre.split(" ")[0]} {emojiHola}
             </h1>
           </div>
           <RangoBadge sellosHistoricos={usuario!.sellosHistoricos || 0} />
         </header>
       ) : (
-        <header>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Bienvenido a
-          </p>
-          <Wordmark className="text-2xl" />
+        <header className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={vendor.theme.logoUrl}
+            alt={vendor.nombre}
+            width={vendor.theme.logoWidth}
+            height={40}
+            className="h-10 w-auto"
+          />
         </header>
       )}
 
-      {/* Carrusel de promociones con imágenes */}
-      <section className="space-y-3">
-        <SectionHeader eyebrow="Lo de hoy" titulo="Promociones 🔥" />
-        <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
-          {BANNERS.map((b, i) => {
-            const href = hrefFor(b.accion);
-            const externo = b.accion === "wsp";
-            const cls =
-              "group relative aspect-[4/5] w-[78%] shrink-0 snap-start overflow-hidden rounded-3xl border border-border/40 shadow-md transition-transform active:scale-[0.98]";
-            const inner = (
-              <>
-                <MediaSlot
-                  src={b.imagen}
-                  alt={b.titulo}
-                  label="Promo"
-                  priority={i === 0}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-foreground">
-                  {b.etiqueta}
-                </span>
-                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <h3 className="font-headline text-xl font-extrabold leading-tight">
-                    {b.titulo}
-                  </h3>
-                  <p className="mt-1 text-sm text-white/85">{b.bajada}</p>
-                  <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">
-                    {b.cta} →
-                  </span>
-                </div>
-              </>
-            );
-            return externo ? (
-              <a
-                key={b.id}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className={cls}
-              >
-                {inner}
-              </a>
-            ) : (
-              <Link key={b.id} href={href} className={cls}>
-                {inner}
-              </Link>
-            );
-          })}
-        </div>
+      {/* Hero de bienvenida (reemplaza el carrusel de promos hardcodeadas) */}
+      <section
+        className="relative overflow-hidden rounded-3xl p-6 text-white shadow-lg"
+        style={{ backgroundColor: vendor.theme.primaryColor }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-14 -left-6 h-32 w-32 rounded-full bg-white/10"
+        />
+        <p className="relative text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">
+          Bienvenido a
+        </p>
+        <h2 className="relative mt-1 font-headline text-2xl font-extrabold leading-tight">
+          {vendor.nombre} {vendor.copy.emojis}
+        </h2>
+        <p className="relative mt-2 max-w-md text-sm text-white/85">
+          {vendor.copy.joinDescription}
+        </p>
       </section>
 
       <NotifBanner />
@@ -182,20 +150,25 @@ export default function HomePage() {
       ) : (
         <section className="bg-nigiri-dark relative overflow-hidden rounded-3xl border border-white/10 p-6 text-white shadow-lg">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-foreground/70">
-            SushiPro Club
+            {vendor.copy.clubName}
           </p>
           <h2 className="mt-1 font-headline text-2xl font-extrabold">
             Hazte socio gratis
           </h2>
           <p className="mt-1 text-sm text-white/70">
-            Junta sellos con cada pedido y canjea premios exclusivos.
+            {vendor.copy.joinDescription}
           </p>
           <ul className="mt-4 space-y-1.5 text-sm text-white/90">
-            <li>🍣 1 sello por cada visita</li>
-            <li>🏆 Premio gratis al 10° sello</li>
+            <li>{vendor.emoji} 1 sello por cada visita</li>
+            <li>🏆 Premio gratis al {vendor.sellosParaPremio}° sello</li>
             <li>🎂 Sello doble el mes de tu cumpleaños</li>
           </ul>
-          <Button asChild size="lg" className="mt-5 w-full">
+          <Button
+            asChild
+            size="lg"
+            className="mt-5 w-full"
+            style={{ backgroundColor: vendor.theme.primaryColor }}
+          >
             <Link href="/unete">Únete al club</Link>
           </Button>
         </section>
@@ -225,7 +198,9 @@ export default function HomePage() {
           className="h-auto flex-col gap-1 rounded-2xl py-5"
         >
           <Link href={logueado ? "/scan" : "/unete"}>
-            <span className="text-2xl">{logueado ? "📷" : "🍣"}</span>
+            <span className="text-2xl">
+              {logueado ? "📷" : vendor.emoji}
+            </span>
             <span>{logueado ? "Escanear" : "Únete"}</span>
           </Link>
         </Button>
@@ -236,7 +211,7 @@ export default function HomePage() {
           className="h-auto flex-col gap-1 rounded-2xl py-5"
         >
           <a href={wsp} target="_blank" rel="noreferrer">
-            <span className="text-2xl">🥢</span>
+            <span className="text-2xl">{vendor.emoji}</span>
             <span>Pedir / Reservar</span>
           </a>
         </Button>
@@ -284,12 +259,16 @@ export default function HomePage() {
       {/* Cierre */}
       <section className="overflow-hidden rounded-3xl border bg-secondary/50">
         <div className="relative aspect-[16/9]">
-          <MediaSlot src="/locales/sushipro/destacado.png" alt="SushiPro" label="Imagen del local" />
+          <MediaSlot
+            src={`/locales/${vendor.slug}/destacado.png`}
+            alt={vendor.nombre}
+            label="Imagen del local"
+          />
         </div>
         <div className="flex items-center justify-between gap-3 p-4">
           <div>
             <p className="font-headline text-lg font-extrabold">
-              Sushi de verdad, hecho al momento
+              {vendor.nombre} {vendor.copy.emojis}
             </p>
             <p className="text-sm text-muted-foreground">
               Pide por WhatsApp y suma sellos.
