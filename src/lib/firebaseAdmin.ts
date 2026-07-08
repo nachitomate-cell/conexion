@@ -36,8 +36,8 @@ function normalizePrivateKey(raw: string | undefined): string | undefined {
 function buildApp(): App {
   if (getApps().length > 0) return getApp();
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID?.trim();
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
   const privateKey = normalizePrivateKey(
     process.env.FIREBASE_ADMIN_PRIVATE_KEY
   );

@@ -7,14 +7,24 @@ export const dynamic = "force-dynamic";
  * Sirve el service worker de Firebase Messaging en el scope raíz
  * (/firebase-messaging-sw.js) inyectando la config pública desde el entorno.
  */
+// Los dashboards de env vars (Vercel u otros) tienden a dejar `\n` colados
+// al final de cada valor cuando pegas con un enter accidental. Firebase los
+// mete literales en `apiKey`, `authDomain`, etc. → messaging deja de funcionar
+// silenciosamente. Trimeamos siempre para blindarnos.
+function trim(v: string | undefined): string {
+  return (v ?? "").trim();
+}
+
 export function GET() {
   const config = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: trim(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+    authDomain: trim(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
+    projectId: trim(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+    storageBucket: trim(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: trim(
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    ),
+    appId: trim(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
   };
 
   const js = `
