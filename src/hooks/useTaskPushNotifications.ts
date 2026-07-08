@@ -171,10 +171,23 @@ export function useTaskPushNotifications(): UsePushApi {
 
       const { getMessaging, getToken } = await import("firebase/messaging");
       const messaging = getMessaging(app);
-      const token = await getToken(messaging, {
-        vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: registration,
-      });
+      let token: string | null = null;
+      try {
+        token = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration,
+        });
+      } catch (e) {
+        const msg = (e as Error).message || "";
+        // `atob` falla cuando la VAPID key tiene caracteres inválidos —
+        // típicamente porque llegó truncada/mangled al deploy.
+        if (msg.includes("atob")) {
+          throw new Error(
+            "La VAPID key del proyecto está mal formada. Revisa NEXT_PUBLIC_FIREBASE_VAPID_KEY en Vercel."
+          );
+        }
+        throw e;
+      }
       if (!token) {
         throw new Error("No pudimos obtener el token del dispositivo.");
       }
@@ -202,6 +215,21 @@ export function useTaskPushNotifications(): UsePushApi {
         loading: false,
         error: null,
       });
+
+      // Notificación de bienvenida — confirma al usuario que quedó activado.
+      // Se muestra desde el SW recién registrado para probar que el pipeline
+      // completo funciona (permiso + SW + registration).
+      try {
+        await registration.showNotification("¡Notificaciones activadas 🎉", {
+          body: "Te avisaremos cada mañana con tus tareas pendientes.",
+          icon: "/icons/icon.svg",
+          badge: "/icons/icon.svg",
+          tag: "welcome",
+          data: { url: TASKS_URL },
+        });
+      } catch {
+        // Si falla, no es crítico — el opt-in ya quedó guardado.
+      }
     } catch (e) {
       setState((s) => ({
         ...s,
