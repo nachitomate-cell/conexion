@@ -31,9 +31,12 @@ function FullLoader() {
 export function RequireAuth({
   children,
   roles,
+  loginPath = "/unete",
 }: {
   children: ReactNode;
   roles?: Rol[];
+  /** Ruta a la que redirige si no hay sesión. Default: `/unete` (login del tenant). */
+  loginPath?: string;
 }) {
   const { firebaseUser, usuario, loading } = useAuth();
   const router = useRouter();
@@ -43,7 +46,7 @@ export function RequireAuth({
 
     // A. Sin sesión
     if (!firebaseUser) {
-      router.replace("/unete");
+      router.replace(loginPath);
       return;
     }
 
@@ -52,10 +55,10 @@ export function RequireAuth({
     if (!usuario) {
       console.error(
         "[RequireAuth] Sesión activa pero sin doc en `usuarios/{uid}`. " +
-          "Redirigiendo a /unete.",
+          `Redirigiendo a ${loginPath}.`,
         { uid: firebaseUser.uid, email: firebaseUser.email }
       );
-      router.replace("/unete");
+      router.replace(loginPath);
       return;
     }
 
@@ -67,7 +70,7 @@ export function RequireAuth({
       );
       router.replace(homeForRole(usuario.rol));
     }
-  }, [loading, firebaseUser, usuario, roles, router]);
+  }, [loading, firebaseUser, usuario, roles, router, loginPath]);
 
   // Mientras Firebase resuelve la sesión.
   if (loading) return <FullLoader />;

@@ -126,9 +126,10 @@ export default function SuperAdminDashboardLayout({
       <main className="lg:pl-64">
         {/* pb-24 en móvil para dejar aire a la bottom nav flotante */}
         <div className="mx-auto max-w-[1600px] px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-8 lg:pt-8">
-          {/* RequireAuth redirige a /unete si no hay sesión — cierra el hueco
-              donde el user en un dominio nuevo se quedaba spinning forever. */}
-          <RequireAuth>{children}</RequireAuth>
+          {/* RequireAuth redirige al login dedicado del panel si no hay
+              sesión — evita mostrar la landing de un tenant (SushiPro, etc.)
+              cuando alguien entra al superadmin desde otro origen. */}
+          <RequireAuth loginPath="/superadmin/login">{children}</RequireAuth>
         </div>
       </main>
 
