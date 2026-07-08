@@ -9,6 +9,8 @@ import {
   Plus,
   HelpCircle,
   GripVertical,
+  ArrowRightLeft,
+  Loader2,
 } from "lucide-react";
 import {
   addDoc,
@@ -43,6 +45,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ejecutarMigracion,
+  previewMigracion,
+  type MigracionPreview,
+} from "@/lib/migrations/menuToProductos";
 import { useVendor } from "@/context/VendorContext";
 import { cn, formatCLP } from "@/lib/utils";
 import type { Categoria, Producto } from "@/types";
@@ -518,6 +525,61 @@ function CartaDigitalInner() {
   const [editProd, setEditProd] = useState<Producto | null>(null);
   const [prodDefaultCat, setProdDefaultCat] = useState<string | null>(null);
 
+  // Migración desde el módulo antiguo (colección `menu`).
+  const [menuLegacyCount, setMenuLegacyCount] = useState(0);
+  const [migModal, setMigModal] = useState(false);
+  const [migPreview, setMigPreview] = useState<MigracionPreview | null>(null);
+  const [migLoadingPreview, setMigLoadingPreview] = useState(false);
+  const [migRunning, setMigRunning] = useState(false);
+
+  // Detecta si hay ítems en la carta antigua para mostrar el banner.
+  useEffect(() => {
+    const qm = query(
+      collection(db, "menu"),
+      where("vendorId", "==", vendor.id)
+    );
+    const unsub = onSnapshot(qm, (snap) => setMenuLegacyCount(snap.size));
+    return () => unsub();
+  }, [vendor.id]);
+
+  const abrirMigracion = async () => {
+    setMigModal(true);
+    setMigPreview(null);
+    setMigLoadingPreview(true);
+    try {
+      const p = await previewMigracion(vendor.id);
+      setMigPreview(p);
+    } catch {
+      toast({ title: "No pudimos calcular el preview" });
+    } finally {
+      setMigLoadingPreview(false);
+    }
+  };
+
+  const confirmarMigracion = async () => {
+    setMigRunning(true);
+    try {
+      const res = await ejecutarMigracion(vendor.id);
+      toast({
+        variant: "success",
+        title: "Migración completada 🎉",
+        description: `${res.categoriasCreadas} categoría(s) · ${res.productosCreados} producto(s) creados${
+          res.productosSkipDuplicados > 0
+            ? ` · ${res.productosSkipDuplicados} duplicados omitidos`
+            : ""
+        }.`,
+      });
+      setMigModal(false);
+    } catch (e) {
+      toast({
+        title: "Falló la migración",
+        description: (e as Error).message,
+      });
+    } finally {
+      setMigRunning(false);
+    }
+  };
+
   // Suscripciones en vivo — se actualizan al crear/editar/borrar.
   useEffect(() => {
     const qc = query(
@@ -626,6 +688,27 @@ function CartaDigitalInner() {
         </Button>
         <h1 className="font-headline text-2xl font-bold">Carta Digital 🍽️</h1>
       </div>
+
+      {/* Banner de migración desde la carta antigua (colección `menu`) */}
+      {menuLegacyCount > 0 && (
+        <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 sm:flex-row sm:items-center">
+          <ArrowRightLeft className="h-4 w-4 shrink-0" />
+          <p className="min-w-0 flex-1">
+            Detectamos <strong>{menuLegacyCount}</strong> ítem
+            {menuLegacyCount === 1 ? "" : "s"} en tu carta antigua. Migra a la
+            nueva estructura para que aparezcan en{" "}
+            <code>/carta</code>.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={abrirMigracion}
+            className="shrink-0 border-amber-300 bg-white hover:bg-amber-100"
+          >
+            Migrar ahora
+          </Button>
+        </div>
+      )}
 
       <Tabs
         value={tab}
@@ -861,6 +944,109 @@ function CartaDigitalInner() {
         defaultCategoriaId={prodDefaultCat}
         onSaved={() => {}}
       />
+
+      {/* Modal de confirmación de migración con preview */}
+      <Dialog open={migModal} onOpenChange={setMigModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="h-4 w-4" />
+              Migrar carta antigua
+            </DialogTitle>
+          </DialogHeader>
+
+          {migLoadingPreview ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Calculando…
+            </div>
+          ) : migPreview ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Copiamos los ítems públicos de <code>menu</code> a la nueva
+                estructura sin borrar los originales. Las categorías nuevas
+                quedan con el icono <em>Utensils</em> por defecto (editable
+                después).
+              </p>
+              <ul className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-xs">
+                <li className="flex items-center justify-between">
+                  <span>Ítems públicos en la carta antigua</span>
+                  <strong className="tabular-nums">
+                    {migPreview.itemsPublicos}
+                  </strong>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Categorías a crear</span>
+                  <strong className="tabular-nums text-emerald-700">
+                    +{migPreview.categoriasACrear}
+                  </strong>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Productos a crear</span>
+                  <strong className="tabular-nums text-emerald-700">
+                    +{migPreview.productosACrear}
+                  </strong>
+                </li>
+                {migPreview.productosSkipDuplicados > 0 && (
+                  <li className="flex items-center justify-between text-muted-foreground">
+                    <span>Duplicados a omitir (mismo nombre)</span>
+                    <strong className="tabular-nums">
+                      {migPreview.productosSkipDuplicados}
+                    </strong>
+                  </li>
+                )}
+                {migPreview.itemsAppMantenidos > 0 && (
+                  <li className="flex items-center justify-between text-muted-foreground">
+                    <span>Ítems app (Club) — no se tocan</span>
+                    <strong className="tabular-nums">
+                      {migPreview.itemsAppMantenidos}
+                    </strong>
+                  </li>
+                )}
+              </ul>
+              <p className="rounded-lg bg-emerald-50 p-3 text-[11px] text-emerald-900">
+                ✓ Podés ejecutar esta migración las veces que quieras — los
+                duplicados se detectan por nombre y se omiten.
+              </p>
+              <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => setMigModal(false)}
+                  disabled={migRunning}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={confirmarMigracion}
+                  disabled={
+                    migRunning ||
+                    migPreview.productosACrear +
+                      migPreview.categoriasACrear ===
+                      0
+                  }
+                >
+                  {migRunning ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Migrando…
+                    </>
+                  ) : migPreview.productosACrear +
+                      migPreview.categoriasACrear ===
+                    0 ? (
+                    "Nada que migrar"
+                  ) : (
+                    "Confirmar migración"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="py-6 text-sm text-muted-foreground">
+              No pudimos calcular el preview.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

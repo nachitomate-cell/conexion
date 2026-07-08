@@ -10,11 +10,11 @@ import {
   Instagram,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
   Search,
   X,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -171,7 +171,7 @@ function BusinessInfoModal({
                     aria-label="WhatsApp"
                     className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-emerald-500/30 transition-transform hover:scale-110 active:scale-95"
                   >
-                    <MessageCircle className="h-6 w-6" strokeWidth={2.25} />
+                    <WhatsAppIcon className="h-7 w-7" />
                   </a>
                 )}
                 {info.instagramHref && (
