@@ -144,6 +144,38 @@ export interface VendorCopy {
  */
 export type MenuScope = "publica" | "app";
 
+/**
+ * Categoría del catálogo estructurado del local — colección `categorias/`.
+ * Multitenant por `vendorId`. `iconName` es el nombre exacto de un icono
+ * de Lucide (ej. "Pizza", "Coffee") — la UI lo mapea dinámicamente.
+ */
+export interface Categoria {
+  id: string;
+  vendorId: string;
+  nombre: string;
+  iconName: string;
+  orden: number;
+  createdAt?: Timestamp;
+}
+
+/**
+ * Producto del catálogo estructurado — colección `productos/`.
+ * Enlaza a `categorias/{categoriaId}` sin denormalizar el nombre (single
+ * source of truth). `disponible=false` permite agotar sin borrar.
+ */
+export interface Producto {
+  id: string;
+  vendorId: string;
+  categoriaId: string;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  imageUrl?: string;
+  disponible: boolean;
+  orden?: number;
+  createdAt?: Timestamp;
+}
+
 /** Item del menú digital, guardado en Firestore por tenant. */
 export interface MenuItem {
   id: string;

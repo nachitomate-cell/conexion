@@ -30,7 +30,7 @@ const NAV: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin", label: "Usuarios", icon: Users },
   { href: "/admin/premios", label: "Inventario de Premios", icon: Gift },
-  { href: "/admin/carta", label: "Carta Digital", icon: UtensilsCrossed },
+  { href: "/admin/carta-digital", label: "Carta Digital", icon: UtensilsCrossed },
   { href: "/admin/delivery", label: "Delivery", icon: Bike },
   { href: "/admin/qr", label: "Mi QR", icon: QrCode },
   { href: "/admin/local", label: "Mi Local", icon: Store },
