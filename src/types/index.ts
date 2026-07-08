@@ -20,6 +20,12 @@ export interface Usuario {
   ultimaVisita?: Timestamp | null;
   rachaActual: number; // días consecutivos con visita
   fcmToken?: string;
+  /**
+   * Tokens FCM para el módulo interno de tareas del panel superadmin.
+   * Se usa un array porque el mismo dueño/socio puede tener PC + móvil.
+   * Separado de `fcmToken` para no mezclar con las notificaciones a clientes.
+   */
+  taskFcmTokens?: string[];
   baneado: boolean;
   recompensaDisponible: boolean;
   sellosLocales?: Record<string, number>; // sellos por vendor/local
@@ -143,6 +149,47 @@ export interface MenuItem {
 
 /** Etapa comercial del tenant dentro del pipeline de la plataforma. */
 export type VendorStatus = "propuesta" | "por_presentar" | "funcionando";
+
+/**
+ * Rol dentro del equipo del panel superadmin. Se usa solo como etiqueta/UI —
+ * los permisos reales los da el claim `superadmin: true` de Firebase Auth y
+ * el campo `rol` de `usuarios/{uid}`.
+ */
+export type TeamRole = "socio" | "desarrollador";
+
+/**
+ * Miembro del equipo con acceso al panel superadmin.
+ * Colección Firestore: `team_members/{uid}`.
+ */
+export interface TeamMember {
+  uid: string;
+  email: string;
+  nombre: string;
+  teamRole: TeamRole;
+  invitedBy?: string | null; // uid del que lo invitó
+  createdAt: number; // epoch ms
+}
+
+/**
+ * Tarea compartida del panel superadmin — para que los socios/dueños de la
+ * plataforma se asignen pendientes entre ellos y reciban recordatorios diarios.
+ */
+export interface Task {
+  id: string;
+  title: string;
+  /** Email (o uid) del asignado. */
+  assignedTo: string;
+  /** Nombre legible para mostrar en la UI. */
+  assignedToName?: string | null;
+  /** Uid del creador. */
+  createdBy: string;
+  createdByEmail?: string | null;
+  createdByName?: string | null;
+  isCompleted: boolean;
+  createdAt: number; // epoch ms
+  completedAt: number | null; // epoch ms
+  dueDate: number | null; // epoch ms (día objetivo)
+}
 
 /** Local/comercio dentro del multitenant. */
 export interface Vendor {

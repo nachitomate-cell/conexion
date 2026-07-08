@@ -25,21 +25,50 @@ firebase.initializeApp(${JSON.stringify(config)});
 
 const messaging = firebase.messaging();
 
+// Lee campos desde payload.data (data-only, recomendado para control total en SW)
+// con fallback a payload.notification para mantener compat con el flujo anterior.
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || "SushiPro Club 🍣";
+  const d = payload.data || {};
+  const n = payload.notification || {};
+  const title = d.title || n.title || "SushiPro Club 🍣";
   const options = {
-    body: (payload.notification && payload.notification.body) || "",
-    icon: "/icons/icon.svg",
-    badge: "/icons/icon.svg",
-    data: { url: (payload.fcmOptions && payload.fcmOptions.link) || "/" },
+    body: d.body || n.body || "",
+    icon: d.icon || "/icons/icon.svg",
+    badge: d.icon || "/icons/icon.svg",
+    tag: d.tag || undefined, // colapsa notificaciones con el mismo tag
+    data: {
+      url:
+        d.url ||
+        (payload.fcmOptions && payload.fcmOptions.link) ||
+        "/",
+    },
   };
   self.registration.showNotification(title, options);
 });
 
+// Al tocar la notificación abrimos la URL objetivo. Si ya hay una ventana
+// abierta en el mismo scope la enfocamos en vez de abrir una nueva.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/";
-  event.waitUntil(clients.openWindow(url));
+  event.waitUntil(
+    (async () => {
+      const all = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const c of all) {
+        try {
+          const u = new URL(c.url);
+          if (u.pathname === url.split("?")[0]) {
+            await c.focus();
+            return;
+          }
+        } catch (_e) {}
+      }
+      await clients.openWindow(url);
+    })()
+  );
 });
 `.trim();
 

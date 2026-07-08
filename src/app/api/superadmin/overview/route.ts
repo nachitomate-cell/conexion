@@ -3,7 +3,6 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { requireUser, AuthError } from "@/lib/apiAuth";
 import { VENDORS } from "@/lib/vendors";
 import {
-  getInfraQuotas,
   getRequestsSparkline,
   getIncidents,
 } from "@/lib/services/metrics";
@@ -341,9 +340,8 @@ export async function POST(req: NextRequest) {
         Number(y.operativo) - Number(x.operativo) || y.clientes - x.clientes
     );
 
-    // Datos de plataforma (infra + sparkline + incidentes) — en paralelo.
-    const [quotas, requestsSpark, incidents] = await Promise.all([
-      getInfraQuotas(),
+    // Datos de plataforma (sparkline + incidentes) — en paralelo.
+    const [requestsSpark, incidents] = await Promise.all([
       getRequestsSparkline(),
       getIncidents(),
     ]);
@@ -361,7 +359,6 @@ export async function POST(req: NextRequest) {
       },
       tenants: lista,
       requestsSpark,
-      quotas,
       incidents,
     });
   } catch (e) {

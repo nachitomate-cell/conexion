@@ -107,3 +107,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error interno." }, { status: 500 });
   }
 }
+
+interface PatchTenantBody {
+  id?: unknown;
+  status?: unknown;
+}
+
+/** Cambia el status de un cliente/tenant existente (propuesta/por_presentar/funcionando). */
+export async function PATCH(req: NextRequest) {
+  try {
+    await requireUser(req);
+    const body = (await req.json()) as PatchTenantBody;
+    const id = String(body.id || "").toLowerCase().trim();
+    if (!ID_RE.test(id)) {
+      return NextResponse.json(
+        { error: "Identificador inválido." },
+        { status: 400 }
+      );
+    }
+    if (!STATUS_VALIDOS.includes(body.status as VendorStatus)) {
+      return NextResponse.json(
+        { error: "Estado inválido." },
+        { status: 400 }
+      );
+    }
+    const ref = adminDb.collection("vendors").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json(
+        { error: "Cliente no encontrado." },
+        { status: 404 }
+      );
+    }
+    await ref.update({
+      status: body.status,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    console.error("superadmin/tenants PATCH", e);
+    return NextResponse.json({ error: "Error interno." }, { status: 500 });
+  }
+}

@@ -1,34 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
-  ArrowDownRight,
-  ArrowUpRight,
   Building2,
   Calendar,
   CheckCircle2,
   ChevronDown,
   CircleDashed,
-  Cpu,
-  Database,
   DollarSign,
-  Download,
-  ExternalLink,
   Flame,
   Globe,
   Handshake,
   Info,
   Loader2,
   LogIn,
-  Pencil,
   Plus,
   RefreshCw,
   Rocket,
   Search,
-  Server,
   ShieldAlert,
   Sparkles,
   Users,
@@ -44,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import type { VendorStatus } from "@/types";
 
 // =========================================================
@@ -72,14 +64,6 @@ interface TenantRow {
   mrr: number;
   ownerEmail: string | null;
   nota: string | null;
-}
-
-interface QuotaApi {
-  service: string;
-  usage: number;
-  limit: number;
-  unit: string;
-  iconKey: string;
 }
 
 interface IncidentApi {
@@ -122,20 +106,10 @@ interface OverviewResponse {
     canjes30d: number;
   }>;
   requestsSpark: number[];
-  quotas: QuotaApi[];
   incidents: IncidentApi[];
 }
 
 type YearFilter = "todos" | "2024" | "2025" | "2026";
-type MonthFilter = "todos" | "trimestre" | "mes";
-
-// Mapa iconKey (que viaja como string desde el server) → componente lucide.
-const QUOTA_ICONS: Record<string, LucideIcon> = {
-  firestore: Database,
-  auth: Users,
-  functions: Cpu,
-  vercel: Server,
-};
 
 const INCIDENT_META: Record<
   IncidentApi["severidad"],
@@ -237,7 +211,7 @@ const STATUS_META: Record<
     badge: "bg-blue-100 text-blue-700 ring-blue-200",
     stripe: "bg-blue-400",
     iconWrap: "bg-blue-100 text-blue-700",
-    desc: "Clientes potenciales o en negociación",
+    desc: "Clientes potenciales · en conversación",
   },
   por_presentar: {
     label: "Falta por presentar",
@@ -247,17 +221,17 @@ const STATUS_META: Record<
     badge: "bg-orange-100 text-orange-700 ring-orange-200",
     stripe: "bg-orange-400",
     iconWrap: "bg-orange-100 text-orange-700",
-    desc: "Desarrollo listo · pendiente reunión con el cliente",
+    desc: "Listo para mostrar al cliente",
   },
   funcionando: {
     label: "Funcionando",
     icon: Rocket,
-    col: "bg-green-50",
-    colBorder: "border-green-200",
-    badge: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-    stripe: "bg-emerald-500",
-    iconWrap: "bg-emerald-100 text-emerald-700",
-    desc: "En producción · uso real por parte de clientes",
+    col: "bg-emerald-50",
+    colBorder: "border-emerald-200",
+    badge: "bg-emerald-100 text-emerald-800 ring-emerald-300",
+    stripe: "bg-gradient-to-r from-emerald-400 to-lime-400",
+    iconWrap: "bg-emerald-100 text-emerald-800",
+    desc: "En uso real por parte del cliente",
   },
 };
 
@@ -275,60 +249,47 @@ interface KpiSpec {
   label: string;
   value: string;
   hint: string;
-  delta: number;
   icon: LucideIcon;
   tone: "indigo" | "emerald" | "amber" | "fuchsia";
 }
 
 function KpiCard({ kpi }: { kpi: KpiSpec }) {
   const Icon = kpi.icon;
-  const up = kpi.delta >= 0;
-  const TrendArrow = up ? ArrowUpRight : ArrowDownRight;
 
   const toneMap = {
     indigo: "from-indigo-500/20 to-indigo-500/0 text-indigo-300 ring-indigo-500/30",
-    emerald: "from-emerald-500/20 to-emerald-500/0 text-emerald-300 ring-emerald-500/30",
+    emerald: "from-emerald-400/25 to-emerald-400/0 text-emerald-300 ring-emerald-400/40",
     amber: "from-amber-500/20 to-amber-500/0 text-amber-300 ring-amber-500/30",
     fuchsia: "from-fuchsia-500/20 to-fuchsia-500/0 text-fuchsia-300 ring-fuchsia-500/30",
   } as const;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-inner shadow-black/20">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:border-white/10 hover:bg-white/[0.04] sm:p-5">
       <div
         className={cn(
-          "absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br opacity-70 blur-2xl",
+          "pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br opacity-70 blur-2xl transition-opacity duration-300 group-hover:opacity-90",
           toneMap[kpi.tone]
         )}
       />
-      <div className="relative flex items-center justify-between">
+      <div className="relative">
         <span
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+            "flex h-9 w-9 items-center justify-center rounded-xl ring-1",
             toneMap[kpi.tone]
           )}
         >
           <Icon className="h-4 w-4" strokeWidth={2.25} />
         </span>
-        <span
-          className={cn(
-            "flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
-            up
-              ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/30"
-              : "bg-rose-500/10 text-rose-300 ring-rose-500/30"
-          )}
-        >
-          <TrendArrow className="h-3 w-3" strokeWidth={2.5} />
-          {up ? "+" : ""}
-          {kpi.delta.toFixed(1)}%
-        </span>
       </div>
-      <p className="relative mt-3 text-[11px] uppercase tracking-widest text-slate-500">
+      <p className="relative mt-3 text-[10px] font-medium uppercase tracking-widest text-slate-400 sm:text-[11px]">
         {kpi.label}
       </p>
-      <p className="relative mt-1 font-mono text-2xl font-bold tabular-nums text-white">
+      <p className="relative mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
         {kpi.value}
       </p>
-      <p className="relative mt-0.5 text-xs text-slate-500">{kpi.hint}</p>
+      <p className="relative mt-0.5 text-[11px] text-slate-400 sm:text-xs">
+        {kpi.hint}
+      </p>
     </div>
   );
 }
@@ -395,64 +356,183 @@ function Slicer<T extends string>({
 }
 
 // =========================================================
+// Menú para cambiar el estado — dropdown en desktop, bottom sheet en móvil
+// =========================================================
+
+function StatusChangeMenu({
+  currentStatus,
+  onSelect,
+  onClose,
+}: {
+  currentStatus: VendorStatus;
+  onSelect: (next: VendorStatus) => void;
+  onClose: () => void;
+}) {
+  const alternatives = STATUS_ORDER.filter((s) => s !== currentStatus);
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  return (
+    <>
+      {/* Backdrop — bloquea clicks fuera */}
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 sm:bg-transparent sm:backdrop-blur-0"
+      />
+      {/* Bottom sheet en móvil, popover en sm+ */}
+      <div
+        role="dialog"
+        aria-label="Cambiar estado del cliente"
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border border-b-0 border-slate-200 bg-white p-3 pb-safe shadow-2xl animate-in slide-in-from-bottom-4 duration-300",
+          "sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-1.5 sm:min-w-[14rem] sm:rounded-xl sm:border sm:p-1.5 sm:slide-in-from-top-2"
+        )}
+      >
+        {/* Grip iOS-style solo en móvil */}
+        <div
+          aria-hidden
+          className="mx-auto mb-2 h-1 w-10 rounded-full bg-slate-300 sm:hidden"
+        />
+        <p className="px-3 pb-1 pt-1 text-[11px] uppercase tracking-widest text-slate-500 sm:hidden">
+          Mover a
+        </p>
+        <ul className="space-y-1">
+          {alternatives.map((s) => {
+            const alt = STATUS_META[s];
+            const Icon = alt.icon;
+            return (
+              <li key={s}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(s);
+                    onClose();
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:bg-slate-100 active:scale-[0.99]",
+                    s === "funcionando" && "hover:bg-emerald-50"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                      alt.iconWrap
+                    )}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={2.25} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-slate-900">
+                      {alt.label}
+                    </span>
+                    <span className="block truncate text-[11px] text-slate-500">
+                      {alt.desc}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {/* Cancelar — solo en móvil */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-2 w-full rounded-xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 sm:hidden"
+        >
+          Cancelar
+        </button>
+      </div>
+    </>
+  );
+}
+
+// =========================================================
 // Tarjeta de tenant (para el Kanban)
 // =========================================================
 
 function TenantCard({
   t,
   onImpersonate,
-  onEdit,
+  onChangeStatus,
 }: {
   t: TenantRow;
   onImpersonate: (t: TenantRow) => void;
-  onEdit: (t: TenantRow) => void;
+  onChangeStatus: (id: string, next: VendorStatus) => void;
 }) {
   const meta = STATUS_META[t.status];
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <article className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
       <div className={cn("h-1 w-full", meta.stripe)} />
       <div className="p-4 sm:p-5">
         <header className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xl ring-1 ring-slate-200">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl ring-1 ring-slate-200">
               {t.emoji}
             </span>
             <div className="min-w-0 flex-1">
               <h4 className="truncate text-sm font-bold text-slate-900">
                 {t.nombre}
               </h4>
-              <p className="truncate font-mono text-[11px] text-slate-500">
-                {t.dominio}
-              </p>
+              {t.dominio && (
+                <p className="truncate text-[11px] text-slate-500">
+                  {t.dominio}
+                </p>
+              )}
             </div>
           </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1",
-              meta.badge
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              title="Cambiar estado"
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 transition-all duration-200 hover:brightness-105 active:scale-[0.97]",
+                meta.badge
+              )}
+            >
+              {meta.label}
+              <ChevronDown
+                className={cn(
+                  "h-3 w-3 transition-transform duration-200",
+                  menuOpen && "rotate-180"
+                )}
+                strokeWidth={2.5}
+              />
+            </button>
+            {menuOpen && (
+              <StatusChangeMenu
+                currentStatus={t.status}
+                onSelect={(next) => onChangeStatus(t.id, next)}
+                onClose={() => setMenuOpen(false)}
+              />
             )}
-          >
-            {meta.label}
-          </span>
+          </div>
         </header>
 
-        {/* Meta info */}
+        {/* Meta info — solo fecha; código interno queda para admin */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
           <span className="inline-flex items-center gap-1">
             <Calendar className="h-3 w-3" />
-            {fmtFecha(t.createdAt)}
-          </span>
-          <span className="font-mono text-slate-400">·</span>
-          <span className="font-mono uppercase tracking-wider text-slate-400">
-            {t.id}
+            Desde {fmtFecha(t.createdAt)}
           </span>
         </div>
 
         {/* Mini métricas — solo para funcionando */}
         {t.status === "funcionando" && (
-          <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-emerald-50/70 p-2 ring-1 ring-emerald-100">
+          <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-emerald-50/80 p-2 ring-1 ring-emerald-100">
             <div className="text-center">
-              <p className="font-mono text-sm font-bold tabular-nums text-emerald-900">
+              <p className="text-sm font-bold tabular-nums text-emerald-900">
                 {fmtNumber(t.usuarios)}
               </p>
               <p className="text-[10px] uppercase tracking-wider text-emerald-700/70">
@@ -460,19 +540,19 @@ function TenantCard({
               </p>
             </div>
             <div className="text-center">
-              <p className="font-mono text-sm font-bold tabular-nums text-emerald-900">
+              <p className="text-sm font-bold tabular-nums text-emerald-900">
                 {fmtNumber(t.sellos30d)}
               </p>
               <p className="text-[10px] uppercase tracking-wider text-emerald-700/70">
-                sellos 30d
+                actividad 30d
               </p>
             </div>
             <div className="text-center">
-              <p className="font-mono text-sm font-bold tabular-nums text-emerald-900">
+              <p className="text-sm font-bold tabular-nums text-emerald-900">
                 {t.mrr > 0 ? fmtCLP(t.mrr) : "—"}
               </p>
               <p className="text-[10px] uppercase tracking-wider text-emerald-700/70">
-                mrr
+                ingresos
               </p>
             </div>
           </div>
@@ -480,7 +560,7 @@ function TenantCard({
 
         {/* Nota interna — visible en las etapas comerciales */}
         {t.nota && t.status !== "funcionando" && (
-          <p className="mt-3 rounded-lg bg-slate-50 p-2 text-[11px] italic text-slate-600 ring-1 ring-slate-200">
+          <p className="mt-3 rounded-xl bg-slate-50 p-2 text-[11px] italic text-slate-600 ring-1 ring-slate-200">
             {t.nota}
           </p>
         )}
@@ -493,21 +573,12 @@ function TenantCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onEdit(t)}
-              title="Editar configuración"
-              className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 sm:flex-none"
-            >
-              <Pencil className="h-3 w-3" strokeWidth={2.25} />
-              Editar
-            </button>
-            <button
-              type="button"
               onClick={() => onImpersonate(t)}
-              title="Impersonar tenant"
-              className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-fuchsia-300 bg-fuchsia-50 px-2 py-1.5 text-[11px] font-semibold text-fuchsia-700 hover:bg-fuchsia-100 sm:flex-none"
+              title="Ver como cliente"
+              className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-gradient-to-br from-emerald-400 to-lime-400 px-2.5 py-1.5 text-[11px] font-semibold text-slate-950 shadow-sm shadow-emerald-500/20 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 active:scale-[0.98] sm:flex-none"
             >
-              <LogIn className="h-3 w-3" strokeWidth={2.25} />
-              Impersonar
+              <LogIn className="h-3 w-3" strokeWidth={2.75} />
+              Ver como cliente
             </button>
           </div>
         </div>
@@ -524,13 +595,13 @@ function PipelineColumn({
   status,
   rows,
   onImpersonate,
-  onEdit,
+  onChangeStatus,
   onCreate,
 }: {
   status: VendorStatus;
   rows: TenantRow[];
   onImpersonate: (t: TenantRow) => void;
-  onEdit: (t: TenantRow) => void;
+  onChangeStatus: (id: string, next: VendorStatus) => void;
   onCreate: () => void;
 }) {
   const meta = STATUS_META[status];
@@ -596,7 +667,7 @@ function PipelineColumn({
               key={t.id}
               t={t}
               onImpersonate={onImpersonate}
-              onEdit={onEdit}
+              onChangeStatus={onChangeStatus}
             />
           ))
         )}
@@ -653,112 +724,6 @@ function Sparkline({
         points={points}
       />
     </svg>
-  );
-}
-
-// =========================================================
-// Panel de infraestructura (cuotas Firebase estimadas)
-// =========================================================
-
-interface QuotaRow {
-  service: string;
-  usage: number;
-  limit: number;
-  unit: string;
-  icon: LucideIcon;
-}
-
-const QUOTAS: QuotaRow[] = [
-  { service: "Firestore reads / día", usage: 1_048_590, limit: 5_000_000, unit: "req", icon: Database },
-  { service: "Firestore writes / día", usage: 118_260, limit: 1_000_000, unit: "req", icon: Database },
-  { service: "Auth users totales", usage: 1_917, limit: 50_000, unit: "u", icon: Users },
-  { service: "Cloud Functions / mes", usage: 214_820, limit: 2_000_000, unit: "inv", icon: Cpu },
-  { service: "Vercel Functions / mes", usage: 82_140, limit: 1_000_000, unit: "inv", icon: Server },
-];
-
-function InfraPanel({ quotas }: { quotas: QuotaApi[] }) {
-  const rows =
-    quotas.length > 0
-      ? quotas
-      : [
-          {
-            service: "Sin datos de infraestructura",
-            usage: 0,
-            limit: 1,
-            unit: "—",
-            iconKey: "firestore",
-          } as QuotaApi,
-        ];
-  return (
-    <section
-      id="infra"
-      className="rounded-xl border border-slate-800 bg-slate-900/60"
-    >
-      <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-        <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-            <Database className="h-4 w-4 text-indigo-400" strokeWidth={2.25} />
-            Infraestructura & cuotas
-          </h2>
-          <p className="text-xs text-slate-500">
-            Consumo global agregado en todos los tenants (últimas 24 h)
-          </p>
-        </div>
-        <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-          {quotas.length > 0 ? "nominal" : "sin datos"}
-        </span>
-      </header>
-      <ul className="divide-y divide-slate-800">
-        {rows.map((q) => {
-          const pct = Math.min(100, (q.usage / q.limit) * 100);
-          const critical = pct >= 80;
-          const warning = pct >= 50 && pct < 80;
-          const Icon = QUOTA_ICONS[q.iconKey] ?? Database;
-          return (
-            <li key={q.service} className="px-5 py-3.5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-400">
-                  <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-slate-200">
-                    {q.service}
-                  </p>
-                  <p className="font-mono text-[11px] text-slate-500">
-                    {fmtNumber(q.usage)} / {fmtNumber(q.limit)} {q.unit}
-                  </p>
-                </div>
-                <span
-                  className={cn(
-                    "font-mono text-xs font-bold tabular-nums",
-                    critical
-                      ? "text-rose-300"
-                      : warning
-                      ? "text-amber-300"
-                      : "text-emerald-300"
-                  )}
-                >
-                  {pct.toFixed(1)}%
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-[width]",
-                    critical
-                      ? "bg-rose-400"
-                      : warning
-                      ? "bg-amber-400"
-                      : "bg-emerald-400"
-                  )}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }
 
@@ -839,71 +804,68 @@ function NewTenantModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-slate-800 bg-slate-900 text-slate-100 sm:max-w-md">
+      <DialogContent className="border-white/10 bg-slate-950 text-slate-100 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <Plus className="h-4 w-4 text-fuchsia-400" />
-            Registrar nuevo tenant
+            <Plus className="h-4 w-4 text-emerald-300" strokeWidth={2.75} />
+            Registrar nuevo cliente
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Provisiona un local nuevo en la plataforma. Se generará un
-            <span className="font-mono text-slate-300"> vendorId </span>
-            y un subdominio asociado.
+            Agrega un nuevo negocio al panel. Le vamos a asignar un espacio
+            propio y su dominio.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] uppercase tracking-widest text-slate-500">
-              Nombre del local
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
+              Nombre del negocio
             </label>
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
               placeholder="Café Unión"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-500"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] uppercase tracking-widest text-slate-500">
-              Prefijo / vendorId
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
+              Código interno
             </label>
             <input
               value={prefijo}
               onChange={(e) => setPrefijo(e.target.value.toUpperCase())}
               required
               placeholder="CAFEUNION"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm uppercase text-white outline-none focus:border-fuchsia-500"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm uppercase tracking-wider text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
             />
             <p className="text-[11px] text-slate-500">
-              Se usará como namespace en Firestore (
-              <span className="font-mono">vendorId = "{prefijo.toLowerCase()}"</span>
-              ).
+              Identificador corto para el negocio. Solo letras y números.
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] uppercase tracking-widest text-slate-500">
-              Dominio asociado
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
+              Dominio del cliente
             </label>
             <input
               value={dominio}
               onChange={(e) => setDominio(e.target.value)}
-              placeholder={`${slugSugerido || "tenant"}.synaptechspa.cl`}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-white outline-none focus:border-fuchsia-500"
+              placeholder={`${slugSugerido || "cliente"}.synaptechspa.cl`}
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] uppercase tracking-widest text-slate-500">
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
               Etapa inicial
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as VendorStatus)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-500"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
             >
               <option value="propuesta">Propuesta</option>
               <option value="por_presentar">Falta por presentar</option>
@@ -913,13 +875,13 @@ function NewTenantModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-slate-500">
+              <label className="text-[11px] uppercase tracking-widest text-slate-400">
                 Plan
               </label>
               <select
                 value={plan}
                 onChange={(e) => setPlan(e.target.value as PlanTier)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-500"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
               >
                 <option value="starter">Starter</option>
                 <option value="growth">Growth</option>
@@ -928,35 +890,35 @@ function NewTenantModal({
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-slate-500">
-                Entorno
+              <label className="text-[11px] uppercase tracking-widest text-slate-400">
+                Modo
               </label>
               <select
                 value={entorno}
                 onChange={(e) => setEntorno(e.target.value as EntornoTier)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-500"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
               >
-                <option value="staging">Staging</option>
+                <option value="staging">Prueba</option>
                 <option value="produccion">Producción</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] uppercase tracking-widest text-slate-500">
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
               Email del dueño
             </label>
             <input
               type="email"
               value={ownerEmail}
               onChange={(e) => setOwnerEmail(e.target.value)}
-              placeholder="contacto@local.cl"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-500"
+              placeholder="contacto@negocio.cl"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
             />
           </div>
 
           {err && (
-            <div className="flex items-start gap-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+            <div className="flex items-start gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>{err}</span>
             </div>
@@ -969,22 +931,139 @@ function NewTenantModal({
                 onOpenChange(false);
                 reset();
               }}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-fuchsia-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 hover:from-fuchsia-400 hover:to-indigo-400 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-emerald-400 to-lime-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 hover:shadow-emerald-500/40 active:scale-[0.98] disabled:opacity-60"
             >
               {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {busy ? "Creando…" : "Crear tenant"}
+              {busy ? "Creando…" : "Crear cliente"}
             </button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// =========================================================
+// Tabs móviles del pipeline — evitan el apilamiento vertical de 3 columnas
+// =========================================================
+
+function MobilePipelineTabs({
+  grouped,
+  onImpersonate,
+  onChangeStatus,
+  onCreate,
+}: {
+  grouped: Record<VendorStatus, TenantRow[]>;
+  onImpersonate: (t: TenantRow) => void;
+  onChangeStatus: (id: string, next: VendorStatus) => void;
+  onCreate: () => void;
+}) {
+  const [active, setActive] = useState<VendorStatus>("funcionando");
+  const rows = grouped[active];
+  const activeMeta = STATUS_META[active];
+
+  return (
+    <div className="lg:hidden">
+      {/* Pestañas — pill selector estilo iOS segmented control */}
+      <div
+        role="tablist"
+        aria-label="Etapa del pipeline"
+        className="relative flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl"
+      >
+        {STATUS_ORDER.map((s) => {
+          const meta = STATUS_META[s];
+          const isActive = s === active;
+          const count = grouped[s].length;
+          return (
+            <button
+              key={s}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActive(s)}
+              className={cn(
+                "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-semibold transition-all duration-300",
+                isActive
+                  ? s === "funcionando"
+                    ? "bg-gradient-to-br from-emerald-400 to-lime-400 text-slate-950 shadow-lg shadow-emerald-500/25"
+                    : "bg-white/10 text-white shadow-md shadow-black/30"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <span className="truncate">{meta.label}</span>
+              <span
+                className={cn(
+                  "min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  isActive
+                    ? s === "funcionando"
+                      ? "bg-slate-950/25 text-slate-950"
+                      : "bg-white/15 text-white"
+                    : "bg-white/[0.06] text-slate-400"
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Cards del status activo — con animación de entrada al cambiar de tab */}
+      <div
+        key={active}
+        className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+      >
+        <div className="mb-2 flex items-center gap-2 px-1 text-[11px] text-slate-400">
+          <span
+            className={cn(
+              "inline-flex h-1.5 w-1.5 rounded-full",
+              active === "funcionando"
+                ? "bg-emerald-400 shadow-[0_0_8px_1px_rgba(52,211,153,0.7)]"
+                : active === "por_presentar"
+                ? "bg-orange-400"
+                : "bg-blue-400"
+            )}
+          />
+          <span>{activeMeta.desc}</span>
+        </div>
+
+        {rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
+            <CircleDashed className="h-5 w-5 text-slate-500" />
+            <p className="text-xs text-slate-400">
+              Sin clientes en esta etapa todavía.
+            </p>
+            {active === "propuesta" && (
+              <button
+                type="button"
+                onClick={onCreate}
+                className="mt-1 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-emerald-400 to-lime-400 px-3 py-1.5 text-[11px] font-semibold text-slate-950 shadow-md shadow-emerald-500/20 transition-all duration-200 active:scale-[0.98]"
+              >
+                <Plus className="h-3 w-3" strokeWidth={2.75} />
+                Nuevo cliente
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {rows.map((t) => (
+              <TenantCard
+                key={t.id}
+                t={t}
+                onImpersonate={onImpersonate}
+                onChangeStatus={onChangeStatus}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -999,12 +1078,6 @@ const YEAR_OPTIONS = [
   { value: "2024", label: "2024" },
 ] as const;
 
-const MONTH_OPTIONS = [
-  { value: "todos", label: "Todo el rango" },
-  { value: "trimestre", label: "Últimos 3 meses" },
-  { value: "mes", label: "Último mes" },
-] as const;
-
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
   { value: "propuesta", label: "Propuestas" },
@@ -1013,8 +1086,10 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function SuperAdminDashboardPage() {
+  const { firebaseUser, loading: authLoading } = useAuth();
+  const authReady = !authLoading && !!firebaseUser;
+
   const [year, setYear] = useState<YearFilter>("todos");
-  const [month, setMonth] = useState<MonthFilter>("todos");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [search, setSearch] = useState("");
   const [newModal, setNewModal] = useState(false);
@@ -1047,8 +1122,9 @@ export default function SuperAdminDashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!authReady) return;
     cargar();
-  }, [cargar]);
+  }, [cargar, authReady]);
 
   const tenants = useMemo<TenantRow[]>(
     () => (data?.tenants ?? []).map(mapTenant),
@@ -1093,36 +1169,32 @@ export default function SuperAdminDashboardPage() {
     const mrrTotal = plat?.mrrTotal ?? 0;
     return [
       {
-        label: "Tenants funcionando",
+        label: "Negocios funcionando",
         value: `${funcionandoCount}/${totalTenants}`,
-        hint: "en producción",
-        delta: 0,
+        hint: "clientes activos",
         icon: Building2,
         tone: "emerald",
       },
       {
-        label: "Usuarios plataforma",
+        label: "Usuarios totales",
         value: fmtNumber(usuariosPlataforma),
-        hint: `${plat?.totalClientes ?? 0} clientes · ${plat?.totalStaff ?? 0} staff`,
-        delta: 0,
+        hint: `${plat?.totalClientes ?? 0} clientes · ${plat?.totalStaff ?? 0} equipo`,
         icon: Users,
         tone: "indigo",
       },
       {
-        label: "Firebase reads / día",
+        label: "Nivel de actividad",
         value: fmtCompact(totalReads),
-        hint: totalReads > 0 ? "métricas por tenant" : "conectar GCP Monitoring",
-        delta: 0,
-        icon: Database,
+        hint: totalReads > 0 ? "acciones registradas hoy" : "sin actividad todavía",
+        icon: Activity,
         tone: "amber",
       },
       {
-        label: "MRR estimado",
+        label: "Ingresos mensuales",
         value: fmtCLP(mrrTotal),
-        hint: mrrTotal > 0 ? "suma de vendor.mrr" : "editable por tenant",
-        delta: 0,
+        hint: mrrTotal > 0 ? "suma por cliente" : "editable por cliente",
         icon: DollarSign,
-        tone: "fuchsia",
+        tone: "emerald",
       },
     ];
   }, [data, tenants]);
@@ -1132,43 +1204,87 @@ export default function SuperAdminDashboardPage() {
     window.open(`/?tenant=${t.slug}`, "_blank");
   };
 
-  const edit = (t: TenantRow) => {
-    // TODO: abrir drawer de configuración avanzada del tenant.
-    // eslint-disable-next-line no-console
-    console.log("edit tenant", t.id);
-  };
+  // Cambia el estado del cliente con optimistic update + rollback si falla.
+  const changeStatus = useCallback(
+    async (id: string, next: VendorStatus) => {
+      // Snapshot para rollback
+      const prev = data;
+      if (data) {
+        setData({
+          ...data,
+          tenants: data.tenants.map((t) =>
+            t.id === id ? { ...t, status: next } : t
+          ),
+        });
+      }
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        const res = await fetch("/api/superadmin/tenants", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken ?? ""}`,
+          },
+          body: JSON.stringify({ id, status: next }),
+        });
+        if (!res.ok) {
+          const j = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(j.error || `Error ${res.status}`);
+        }
+        // Sincronizamos con el servidor (por si otros campos cambiaron).
+        cargar();
+      } catch (e) {
+        setData(prev); // rollback
+        setErr((e as Error).message);
+      }
+    },
+    [data, cargar]
+  );
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-fuchsia-400">
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-fuchsia-400" />
-            Multitenant control plane
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">
-            Super Admin · Pipeline
-          </h1>
+    <div className="space-y-6 sm:space-y-8">
+      {/* HERO motivacional — visible en todo tamaño, primero al entrar */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.08] via-slate-900/60 to-slate-950 px-5 py-8 shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-top-4 duration-700 sm:px-8 sm:py-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -left-16 h-64 w-64 rounded-full bg-lime-400/10 blur-3xl"
+        />
+        <p className="relative flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300 sm:text-xs">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_12px_2px_rgba(52,211,153,0.6)]" />
+          Panel General
+        </p>
+        <h1 className="relative mt-3 bg-gradient-to-br from-white via-emerald-100 to-emerald-300 bg-clip-text font-headline text-3xl font-bold leading-tight tracking-tight text-transparent sm:text-5xl">
+          Este es el comienzo de algo grande 🚀
+        </h1>
+        <p className="relative mt-2 max-w-xl text-sm text-slate-400 sm:mt-3 sm:text-base">
+          Nuestro primer gran cliente de muchos por venir.
+        </p>
+      </section>
+
+      {/* HEADER — compacto en móvil (título + acción principal), completo en desktop */}
+      <header className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-500 lg:flex-row lg:items-end lg:justify-between">
+        {/* Título solo en desktop — en móvil el hero + bottom nav ya dan identidad */}
+        <div className="hidden min-w-0 lg:block">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            Estado de los Negocios
+          </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Gestor de estados de los tenants: propuesta → por presentar → funcionando.
+            Propuestas · por presentar · funcionando.
           </p>
         </div>
 
-        {/* Barra de filtros — flujo en móvil: slicers wrap, luego botones full-width */}
+        {/* Barra de filtros + acciones */}
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <Slicer<YearFilter>
               label="Año"
               value={year}
               options={YEAR_OPTIONS}
               onChange={setYear}
-            />
-            <Slicer<MonthFilter>
-              label="Periodo"
-              value={month}
-              options={MONTH_OPTIONS}
-              onChange={setMonth}
             />
             <Slicer<StatusFilter>
               label="Etapa"
@@ -1177,43 +1293,36 @@ export default function SuperAdminDashboardPage() {
               onChange={setStatusFilter}
             />
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <button
               type="button"
               onClick={cargar}
               disabled={loading}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-60"
-              title="Refrescar métricas"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-300 transition-all duration-200 hover:bg-white/[0.06] active:scale-[0.98] disabled:opacity-60"
+              title="Actualizar"
             >
               <RefreshCw
                 className={cn("h-3.5 w-3.5", loading && "animate-spin")}
               />
-              Refrescar
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800"
-            >
-              <Download className="h-3.5 w-3.5" />
-              CSV
+              Actualizar
             </button>
             <button
               type="button"
               onClick={() => setNewModal(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-fuchsia-500 to-indigo-500 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/20 hover:from-fuchsia-400 hover:to-indigo-400"
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-400 to-lime-400 px-3 py-2 text-xs font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 hover:shadow-emerald-500/40 active:scale-[0.98]"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Nuevo tenant
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.75} />
+              Nuevo cliente
             </button>
           </div>
         </div>
       </header>
 
       {err && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="flex items-start gap-2 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">No pudimos cargar el overview</p>
+            <p className="font-semibold">No pudimos cargar los datos</p>
             <p className="text-xs text-rose-300/80">{err}</p>
           </div>
           <button
@@ -1229,184 +1338,154 @@ export default function SuperAdminDashboardPage() {
       {loading && !data && (
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Consultando métricas de la plataforma…
+          Cargando información…
         </div>
       )}
 
-      {/* KPIs — 1 col móvil · 2 cols tablet · 4 cols desktop */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((k) => (
-          <KpiCard key={k.label} kpi={k} />
+      {/* KPIs — 2x2 en móvil, 4 columnas en desktop */}
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {kpis.map((k, i) => (
+          <div
+            key={k.label}
+            className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+            style={{ animationDuration: "500ms", animationDelay: `${i * 80}ms` }}
+          >
+            <KpiCard kpi={k} />
+          </div>
         ))}
       </section>
 
       {/* PIPELINE BOARD (Kanban) */}
-      <section id="tenants" className="space-y-3">
+      <section id="clientes" className="space-y-3 scroll-mt-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Pipeline de tenants
+              Estado de los Negocios
             </h2>
             <p className="text-xs text-slate-500">
-              {filtered.length} tenant{filtered.length === 1 ? "" : "s"} en la vista ·
-              agrupado por etapa comercial
+              {filtered.length} cliente{filtered.length === 1 ? "" : "s"} en la vista
             </p>
           </div>
           {/* Búsqueda: full-width en móvil, ancho fijo en desktop */}
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar tenant, dominio, vendorId…"
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 py-2 pl-8 pr-3 text-xs text-slate-200 placeholder:text-slate-500 focus:border-fuchsia-500 focus:outline-none"
+              placeholder="Buscar cliente o dominio…"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 pl-9 pr-3 text-xs text-slate-200 placeholder:text-slate-500 transition-colors focus:border-emerald-400/60 focus:outline-none focus:ring-1 focus:ring-emerald-400/30"
             />
           </div>
         </div>
 
-        {/* Columnas: apiladas en móvil, en fila desde lg */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        {/* Móvil: tabs deslizables — solo se ve la etapa activa (evita scroll infinito) */}
+        <MobilePipelineTabs
+          grouped={grouped}
+          onImpersonate={impersonate}
+          onChangeStatus={changeStatus}
+          onCreate={() => setNewModal(true)}
+        />
+
+        {/* Desktop (lg+): tres columnas lado a lado */}
+        <div className="hidden gap-6 lg:flex">
           {STATUS_ORDER.map((status) => (
             <PipelineColumn
               key={status}
               status={status}
               rows={grouped[status]}
               onImpersonate={impersonate}
-              onEdit={edit}
+              onChangeStatus={changeStatus}
               onCreate={() => setNewModal(true)}
             />
           ))}
         </div>
       </section>
 
-      {/* SPARKLINE + INFRA + INCIDENTES */}
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 xl:col-span-2">
+      {/* ACTIVIDAD (sparkline) */}
+      <section id="actividad" className="scroll-mt-4">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-6">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Activity className="h-4 w-4 shrink-0 text-fuchsia-400" strokeWidth={2.25} />
-                Eventos plataforma · últimos 30 días
+                <Activity
+                  className="h-4 w-4 shrink-0 text-emerald-300"
+                  strokeWidth={2.25}
+                />
+                Actividad · últimos 30 días
               </h2>
-              <p className="text-xs text-slate-500">
-                Suma diaria de <span className="font-mono">system_logs</span> a través de todos los tenants.
+              <p className="mt-1 text-xs text-slate-400">
+                Resumen de actividad diaria de los clientes.
               </p>
             </div>
             <div className="text-left sm:text-right">
-              <p className="font-mono text-2xl font-bold text-white">
+              <p className="text-2xl font-bold tabular-nums text-white">
                 {fmtCompact(
                   (data?.requestsSpark ?? []).reduce((a, b) => a + b, 0)
                 )}
               </p>
-              <p className="text-[11px] text-slate-500">
-                {(data?.requestsSpark ?? []).length} días con datos
-              </p>
+              <p className="text-[11px] text-slate-500">acciones totales</p>
             </div>
           </div>
-          <Sparkline data={data?.requestsSpark ?? []} height={80} />
+          <Sparkline
+            data={data?.requestsSpark ?? []}
+            height={80}
+            color="#34d399"
+          />
         </div>
-
-        <InfraPanel quotas={data?.quotas ?? []} />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div
-          id="incidentes"
-          className="rounded-xl border border-slate-800 bg-slate-900/60 xl:col-span-2"
-        >
-          <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-              <ShieldAlert className="h-4 w-4 text-rose-400" strokeWidth={2.25} />
-              Incidentes activos
-            </h2>
-            <span
+      {/* ALERTAS */}
+      <section
+        id="alertas"
+        className="scroll-mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-xl shadow-black/20 backdrop-blur-xl"
+      >
+        <header className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+            <ShieldAlert
               className={cn(
-                "rounded-md border px-1.5 py-0.5 text-[10px] font-bold",
+                "h-4 w-4",
                 (data?.incidents.length ?? 0) > 0
-                  ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                  : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                  ? "text-rose-400"
+                  : "text-emerald-300"
               )}
-            >
-              {data?.incidents.length ?? 0}
-            </span>
-          </header>
-          <ul className="divide-y divide-slate-800 text-xs">
-            {(data?.incidents ?? []).map((inc) => {
-              const meta = INCIDENT_META[inc.severidad];
-              const Icon = meta.icon;
-              return (
-                <li key={inc.id} className="flex items-start gap-3 px-5 py-3">
-                  <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-slate-200">
-                      {inc.titulo}
-                      {inc.vendorId && (
-                        <>
-                          {" "}
-                          ·{" "}
-                          <span className="font-mono text-white">
-                            {inc.vendorId}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                    <p className="text-slate-500">
-                      {inc.descripcion} · {fmtRelativo(inc.createdAt)}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-            {(!data?.incidents || data.incidents.length === 0) && (
-              <li className="flex items-start gap-3 px-5 py-3 text-slate-500">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                <div className="min-w-0">
+              strokeWidth={2.25}
+            />
+            Alertas activas
+          </h2>
+          <span
+            className={cn(
+              "rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums",
+              (data?.incidents.length ?? 0) > 0
+                ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                : "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+            )}
+          >
+            {data?.incidents.length ?? 0}
+          </span>
+        </header>
+        <ul className="divide-y divide-white/[0.05] text-xs">
+          {(data?.incidents ?? []).map((inc) => {
+            const meta = INCIDENT_META[inc.severidad];
+            const Icon = meta.icon;
+            return (
+              <li key={inc.id} className="flex items-start gap-3 px-5 py-3">
+                <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-100">{inc.titulo}</p>
                   <p className="text-slate-400">
-                    Sin incidentes registrados en <span className="font-mono">incidents</span>.
+                    {inc.descripcion} · {fmtRelativo(inc.createdAt)}
                   </p>
                 </div>
               </li>
-            )}
-          </ul>
-        </div>
-
-        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-            Accesos rápidos
-          </h3>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Link
-              href="https://console.firebase.google.com"
-              target="_blank"
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-white"
-            >
-              Firebase
-              <ExternalLink className="h-3 w-3 text-slate-500" />
-            </Link>
-            <Link
-              href="https://vercel.com/dashboard"
-              target="_blank"
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-white"
-            >
-              Vercel
-              <ExternalLink className="h-3 w-3 text-slate-500" />
-            </Link>
-            <Link
-              href="/superadmin/logs"
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-white"
-            >
-              Logs sistema
-              <ExternalLink className="h-3 w-3 text-slate-500" />
-            </Link>
-            <Link
-              href="/admin"
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-white"
-            >
-              Panel admin
-              <ExternalLink className="h-3 w-3 text-slate-500" />
-            </Link>
-          </div>
-        </section>
+            );
+          })}
+          {(!data?.incidents || data.incidents.length === 0) && (
+            <li className="flex items-start gap-3 px-5 py-4">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+              <p className="text-slate-300">Todo en orden. Sin alertas activas.</p>
+            </li>
+          )}
+        </ul>
       </section>
 
       {/* Modal nuevo tenant */}

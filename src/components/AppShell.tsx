@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 // Rutas que se muestran sin el chrome (header + bottom nav).
-const BARE_ROUTES = ["/unete", "/admin/dashboard", "/superadmin/dashboard"];
+const BARE_ROUTES = ["/unete", "/admin/dashboard", "/superadmin"];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

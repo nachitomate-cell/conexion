@@ -4,40 +4,6 @@ import { adminDb } from "@/lib/firebaseAdmin";
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Cuota de un servicio de infraestructura.
- * `iconKey` es un identificador de string; el cliente lo mapea a un ícono
- * de lucide para evitar enviar componentes React desde el servidor.
- */
-export interface QuotaRow {
-  service: string;
-  usage: number;
-  limit: number;
-  unit: string;
-  iconKey: "firestore" | "auth" | "functions" | "vercel";
-}
-
-/**
- * TODO — Conectar a métricas reales:
- *   - Firestore reads/writes:  Cloud Monitoring API
- *     https://cloud.google.com/monitoring/api/metrics_gcp#gcp-firestore
- *   - Auth users totales:      adminAuth.listUsers() (paginado) o Analytics API
- *   - Cloud Functions:         Cloud Monitoring API (execution_count)
- *   - Vercel Functions:        Vercel Analytics API (requires VERCEL_TOKEN)
- *     https://vercel.com/docs/rest-api/reference/endpoints/analytics
- *
- * Mientras tanto devolvemos valores plausibles para poder testear la UI.
- */
-export async function getInfraQuotas(): Promise<QuotaRow[]> {
-  return [
-    { service: "Firestore reads / día", usage: 1_048_590, limit: 5_000_000, unit: "req", iconKey: "firestore" },
-    { service: "Firestore writes / día", usage: 118_260, limit: 1_000_000, unit: "req", iconKey: "firestore" },
-    { service: "Auth users totales", usage: 1_917, limit: 50_000, unit: "u", iconKey: "auth" },
-    { service: "Cloud Functions / mes", usage: 214_820, limit: 2_000_000, unit: "inv", iconKey: "functions" },
-    { service: "Vercel Functions / mes", usage: 82_140, limit: 1_000_000, unit: "inv", iconKey: "vercel" },
-  ];
-}
-
-/**
  * Agrega los últimos 30 días de `system_logs` por día (todos los tenants).
  * Devuelve un array de 30 conteos, index 0 = hace 29 días, index 29 = hoy.
  */

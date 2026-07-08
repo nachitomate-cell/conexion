@@ -9,6 +9,7 @@ import {
   Gift,
   RefreshCw,
   ExternalLink,
+  LayoutDashboard,
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -190,10 +191,16 @@ function SuperAdminInner() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm text-muted-foreground">Consola de plataforma</p>
-          <h1 className="font-headline text-2xl font-bold">Superadmin 🛰️</h1>
+          <p className="text-sm text-muted-foreground">Panel General</p>
+          <h1 className="font-headline text-2xl font-bold">Resumen 🛰️</h1>
         </div>
         <div className="flex gap-2">
+          <Button asChild size="sm" className="gap-1.5">
+            <Link href="/superadmin/dashboard">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="icon" aria-label="Ir a admin">
             <Link href="/admin">
               <ExternalLink className="h-4 w-4" />
@@ -221,15 +228,15 @@ function SuperAdminInner() {
       ) : p ? (
         <div className="grid grid-cols-2 gap-3">
           <StatCard
-            label="Locales"
+            label="Negocios"
             value={`${p.tenantsOperativos}/${p.tenantsTotales}`}
-            hint="operativos (mov. 7d)"
+            hint="con actividad reciente"
             icon={<Building2 className="h-4 w-4" />}
           />
           <StatCard
-            label="Clientes"
+            label="Usuarios"
             value={p.totalClientes}
-            hint={`${p.totalStaff} staff · ${p.totalUsuarios} cuentas`}
+            hint={`${p.totalStaff} equipo · ${p.totalUsuarios} cuentas`}
             icon={<Users className="h-4 w-4" />}
           />
           <StatCard
@@ -248,9 +255,7 @@ function SuperAdminInner() {
       ) : null}
 
       <div>
-        <h2 className="mb-2 font-headline text-lg font-bold">
-          Locales / Tenants
-        </h2>
+        <h2 className="mb-2 font-headline text-lg font-bold">Clientes</h2>
         {!data ? (
           <div className="space-y-2">
             <Skeleton className="h-28 w-full" />
@@ -258,7 +263,7 @@ function SuperAdminInner() {
           </div>
         ) : data.tenants.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No hay locales registrados todavía.
+            No hay clientes registrados todavía.
           </p>
         ) : (
           <div className="space-y-2">
