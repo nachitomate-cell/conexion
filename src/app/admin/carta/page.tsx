@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Pencil, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import {
   addDoc,
   collection,
@@ -28,8 +34,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useVendor } from "@/context/VendorContext";
-import { formatCLP } from "@/lib/utils";
-import type { MenuItem } from "@/types";
+import { cn, formatCLP } from "@/lib/utils";
+import type { MenuItem, MenuScope } from "@/types";
 
 const VACIO = {
   nombre: "",
@@ -41,14 +47,20 @@ const VACIO = {
   activo: true,
 };
 
+function itemScope(m: MenuItem): MenuScope {
+  return m.scope ?? "publica";
+}
+
 function CartaAdminInner() {
   const { toast } = useToast();
   const vendor = useVendor();
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [scope, setScope] = useState<MenuScope>("publica");
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...VACIO });
   const [busy, setBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "menu"), where("vendorId", "==", vendor.id));
@@ -61,17 +73,27 @@ function CartaAdminInner() {
     return () => unsub();
   }, [vendor.id]);
 
+  const filtered = useMemo(
+    () => items.filter((it) => itemScope(it) === scope),
+    [items, scope]
+  );
+
   // Agrupa por categoría preservando el orden.
   const grupos = useMemo(() => {
     const acc: Record<string, MenuItem[]> = {};
-    for (const it of items) (acc[it.categoria || "General"] ||= []).push(it);
+    for (const it of filtered) (acc[it.categoria || "General"] ||= []).push(it);
     for (const key of Object.keys(acc)) {
       acc[key].sort(
         (a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre)
       );
     }
     return acc;
-  }, [items]);
+  }, [filtered]);
+
+  const categoriasActuales = useMemo(
+    () => Array.from(new Set(items.map((it) => it.categoria || "General"))).sort(),
+    [items]
+  );
 
   const abrirNuevo = () => {
     setEditId(null);
@@ -109,6 +131,7 @@ function CartaAdminInner() {
         orden: Number(form.orden) || 0,
         activo: form.activo,
         vendorId: vendor.id,
+        scope,
       };
       if (editId) {
         await updateDoc(doc(db, "menu", editId), payload);
@@ -133,7 +156,66 @@ function CartaAdminInner() {
     toast({ title: "Ítem eliminado" });
   };
 
+  /**
+   * Copia todos los ítems de la carta pública a la carta app.
+   * Evita duplicados: mismo (nombre + categoria) ya presentes en app se saltan.
+   * Cada ítem se clona con un nuevo id — así puedes ajustar precios / promos
+   * sin afectar la pública.
+   */
+  const sincronizar = async () => {
+    const publicos = items.filter((it) => itemScope(it) === "publica");
+    if (publicos.length === 0) {
+      toast({ title: "No hay ítems públicos para sincronizar" });
+      return;
+    }
+    const existentes = new Set(
+      items
+        .filter((it) => itemScope(it) === "app")
+        .map((it) => `${it.nombre.toLowerCase()}::${it.categoria || ""}`)
+    );
+    setSyncing(true);
+    try {
+      let copiados = 0;
+      for (const it of publicos) {
+        const key = `${it.nombre.toLowerCase()}::${it.categoria || ""}`;
+        if (existentes.has(key)) continue;
+        await addDoc(collection(db, "menu"), {
+          vendorId: vendor.id,
+          nombre: it.nombre,
+          emoji: it.emoji || "🍣",
+          descripcion: it.descripcion || "",
+          precio: it.precio || 0,
+          categoria: it.categoria || "General",
+          orden: it.orden ?? 0,
+          activo: it.activo,
+          scope: "app" as MenuScope,
+        });
+        copiados++;
+      }
+      toast({
+        variant: "success",
+        title:
+          copiados > 0
+            ? `${copiados} ítem${copiados === 1 ? "" : "s"} sincronizado${
+                copiados === 1 ? "" : "s"
+              }`
+            : "La carta app ya estaba al día",
+        description:
+          copiados > 0
+            ? "Ahora puedes ajustar precios o marcar promos exclusivas."
+            : undefined,
+      });
+      if (copiados > 0) setScope("app");
+    } catch {
+      toast({ title: "No pudimos sincronizar" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const categorias = Object.keys(grupos).sort();
+  const countPublica = items.filter((it) => itemScope(it) === "publica").length;
+  const countApp = items.filter((it) => itemScope(it) === "app").length;
 
   return (
     <div className="space-y-4">
@@ -146,13 +228,83 @@ function CartaAdminInner() {
         <h1 className="font-headline text-2xl font-bold">Carta Digital 🍽️</h1>
       </div>
 
+      {/* Segmented control público / app */}
+      <div className="flex gap-1 rounded-xl border bg-muted/40 p-1">
+        {(
+          [
+            { id: "publica" as const, label: "Carta pública", count: countPublica },
+            { id: "app" as const, label: "Carta app", count: countApp },
+          ] satisfies { id: MenuScope; label: string; count: number }[]
+        ).map((t) => {
+          const active = scope === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setScope(t.id)}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200",
+                active
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span className="truncate">{t.label}</span>
+              <span
+                className={cn(
+                  "min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  active
+                    ? "bg-primary/15 text-primary"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {t.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Aviso de la carta app */}
+      {scope === "app" && (
+        <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/[0.06] p-3 text-xs">
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-foreground">Promos exclusivas de la app</p>
+            <p className="mt-0.5 text-muted-foreground">
+              Aquí puedes crear precios especiales, combos o promos que solo
+              verán los clientes dentro de la app / Club. Se muestran separadas
+              de la carta pública.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={sincronizar}
+            disabled={syncing}
+            className="shrink-0"
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", syncing && "animate-spin")}
+            />
+            {syncing ? "Sincronizando…" : "Sincronizar con pública"}
+          </Button>
+        </div>
+      )}
+
       <Button className="w-full" onClick={abrirNuevo}>
         <Plus className="h-4 w-4" /> Nuevo ítem
+        <span className="ml-1 text-xs opacity-75">
+          {scope === "publica" ? "(pública)" : "(app)"}
+        </span>
       </Button>
 
       {categorias.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          Aún no hay ítems en la carta. Crea el primero.
+          {scope === "publica"
+            ? "Aún no hay ítems en la carta pública. Crea el primero."
+            : "La carta app está vacía. Usa 'Sincronizar' para partir de la pública o crea promos nuevas."}
         </p>
       ) : (
         <div className="space-y-6">
@@ -197,7 +349,12 @@ function CartaAdminInner() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editId ? "Editar ítem" : "Nuevo ítem"}</DialogTitle>
+            <DialogTitle>
+              {editId ? "Editar ítem" : "Nuevo ítem"} ·{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {scope === "publica" ? "carta pública" : "carta app"}
+              </span>
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-[80px_1fr] gap-3">
@@ -256,7 +413,7 @@ function CartaAdminInner() {
                   list="cat-suggestions"
                 />
                 <datalist id="cat-suggestions">
-                  {categorias.map((c) => (
+                  {categoriasActuales.map((c) => (
                     <option key={c} value={c} />
                   ))}
                 </datalist>

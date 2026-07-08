@@ -10,6 +10,7 @@ import {
   UtensilsCrossed,
   Store,
   Bike,
+  QrCode,
   Instagram,
   Menu as MenuIcon,
   X,
@@ -31,6 +32,7 @@ const NAV: NavItem[] = [
   { href: "/admin/premios", label: "Inventario de Premios", icon: Gift },
   { href: "/admin/carta", label: "Carta Digital", icon: UtensilsCrossed },
   { href: "/admin/delivery", label: "Delivery", icon: Bike },
+  { href: "/admin/qr", label: "Mi QR", icon: QrCode },
   { href: "/admin/local", label: "Mi Local", icon: Store },
 ];
 

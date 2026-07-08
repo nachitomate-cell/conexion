@@ -134,6 +134,16 @@ export interface VendorCopy {
   emojis: string; // string de emojis temáticos, ej. "🍔🍻"
 }
 
+/**
+ * Alcance de un ítem de la carta:
+ *   - "publica": aparece en la carta pública (`/menu`, la que ve cualquier
+ *     visitante que abre el dominio del local).
+ *   - "app":    solo visible dentro de la app / Club — el espacio ideal para
+ *     promos y precios exclusivos de fidelización.
+ * Ítems sin `scope` se tratan como "publica" (compat con datos previos).
+ */
+export type MenuScope = "publica" | "app";
+
 /** Item del menú digital, guardado en Firestore por tenant. */
 export interface MenuItem {
   id: string;
@@ -145,6 +155,7 @@ export interface MenuItem {
   categoria: string;
   activo: boolean;
   orden?: number;
+  scope?: MenuScope;
 }
 
 /** Etapa comercial del tenant dentro del pipeline de la plataforma. */

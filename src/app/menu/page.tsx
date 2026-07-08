@@ -24,7 +24,8 @@ export default function MenuPage() {
       (snap) => {
         const list = snap.docs
           .map((d) => ({ id: d.id, ...d.data() }) as MenuItem)
-          .filter((it) => it.activo);
+          // Solo carta pública (o ítems legacy sin scope).
+          .filter((it) => it.activo && (it.scope ?? "publica") === "publica");
         setItems(list);
       },
       () => setItems([])
