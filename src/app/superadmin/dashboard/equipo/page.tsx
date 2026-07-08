@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  BellRing,
   CircleDashed,
   Code,
   Copy,
@@ -9,6 +10,7 @@ import {
   Loader2,
   Mail,
   Plus,
+  Send,
   UserPlus,
   X,
 } from "lucide-react";
@@ -377,6 +379,182 @@ function InviteModal({
 }
 
 // =========================================================
+// Modal: broadcast al equipo (envía push a todos los miembros con token)
+// =========================================================
+
+function BroadcastModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState("Mensaje del equipo 📸");
+  const [body, setBody] = useState(
+    "Si ves este mensaje, mándame una foto al teléfono."
+  );
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open) setResult(null);
+  }, [open]);
+
+  if (!open) return null;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setResult(null);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/team/broadcast", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken ?? ""}`,
+        },
+        body: JSON.stringify({ title: title.trim(), body: body.trim() }),
+      });
+      const j = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        recipients?: number;
+        tokens?: number;
+        success?: number;
+        failure?: number;
+        info?: string;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(j.error || `Error ${res.status}`);
+      if (j.info) {
+        setResult({ ok: false, message: j.info });
+      } else {
+        setResult({
+          ok: (j.success ?? 0) > 0,
+          message: `Enviada a ${j.success}/${j.tokens} dispositivos de ${j.recipients} miembros.`,
+        });
+      }
+    } catch (e) {
+      setResult({ ok: false, message: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      />
+      <div
+        role="dialog"
+        aria-label="Enviar notificación al equipo"
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border border-b-0 border-white/10 bg-slate-950 p-5 pb-8 shadow-2xl shadow-black/60 animate-in slide-in-from-bottom-6 duration-300",
+          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border sm:p-6"
+        )}
+      >
+        <div
+          aria-hidden
+          className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden"
+        />
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+              <BellRing
+                className="h-5 w-5 text-emerald-300"
+                strokeWidth={2.25}
+              />
+              Enviar al equipo
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Push a todos los miembros con notificaciones activadas.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
+              Título
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              maxLength={80}
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] uppercase tracking-widest text-slate-400">
+              Mensaje
+            </label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              required
+              maxLength={200}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
+            />
+          </div>
+
+          {result && (
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-2 text-xs",
+                result.ok
+                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                  : "border-amber-500/40 bg-amber-500/10 text-amber-200"
+              )}
+            >
+              {result.message}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2 sm:flex-row-reverse">
+            <button
+              type="submit"
+              disabled={busy || !title.trim() || !body.trim()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-emerald-400 to-lime-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 hover:shadow-emerald-500/40 active:scale-[0.98] disabled:opacity-50"
+            >
+              {busy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" strokeWidth={2.5} />
+              )}
+              {busy ? "Enviando…" : "Enviar ahora"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:bg-white/[0.06]"
+            >
+              Cerrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+}
+
+// =========================================================
 // Página principal
 // =========================================================
 
@@ -389,6 +567,7 @@ export default function EquipoPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -431,15 +610,25 @@ export default function EquipoPage() {
           </p>
         </div>
 
-        {/* Botón principal — visible en desktop; en móvil hay FAB flotante */}
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="hidden shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-400 to-lime-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 hover:shadow-emerald-500/40 active:scale-[0.98] sm:flex"
-        >
-          <UserPlus className="h-4 w-4" strokeWidth={2.5} />
-          Invitar al Equipo
-        </button>
+        {/* Botones — visibles en desktop; en móvil hay FABs flotantes */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <button
+            type="button"
+            onClick={() => setBroadcastOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-3 py-2.5 text-sm font-semibold text-emerald-200 transition-all duration-200 hover:bg-emerald-400/[0.12] active:scale-[0.98]"
+          >
+            <BellRing className="h-4 w-4" strokeWidth={2.25} />
+            Enviar al equipo
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-400 to-lime-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-300 hover:to-lime-300 hover:shadow-emerald-500/40 active:scale-[0.98]"
+          >
+            <UserPlus className="h-4 w-4" strokeWidth={2.5} />
+            Invitar al Equipo
+          </button>
+        </div>
       </header>
 
       {err && (
@@ -478,20 +667,35 @@ export default function EquipoPage() {
         </ul>
       )}
 
-      {/* FAB móvil */}
-      <button
-        type="button"
-        onClick={() => setModalOpen(true)}
-        aria-label="Invitar al equipo"
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-lime-400 text-slate-950 shadow-2xl shadow-emerald-500/40 transition-all duration-200 hover:scale-105 hover:shadow-emerald-500/60 active:scale-95 sm:hidden"
-      >
-        <UserPlus className="h-6 w-6" strokeWidth={2.5} />
-      </button>
+      {/* FABs móviles — stack vertical */}
+      <div className="fixed bottom-24 right-4 z-30 flex flex-col gap-3 sm:hidden">
+        <button
+          type="button"
+          onClick={() => setBroadcastOpen(true)}
+          aria-label="Enviar al equipo"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-400/40 bg-slate-900/90 text-emerald-200 shadow-2xl shadow-black/60 backdrop-blur-xl transition-all duration-200 hover:scale-105 active:scale-95"
+        >
+          <BellRing className="h-5 w-5" strokeWidth={2.25} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          aria-label="Invitar al equipo"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-lime-400 text-slate-950 shadow-2xl shadow-emerald-500/40 transition-all duration-200 hover:scale-105 hover:shadow-emerald-500/60 active:scale-95"
+        >
+          <UserPlus className="h-6 w-6" strokeWidth={2.5} />
+        </button>
+      </div>
 
       <InviteModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onInvited={cargar}
+      />
+
+      <BroadcastModal
+        open={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
       />
     </div>
   );
