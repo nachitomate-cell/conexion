@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RequireAuth } from "@/components/RequireAuth";
 
 // Layout independiente del Super Admin — NO usa useVendor().
 // Vista global sobre todos los clientes de la plataforma.
@@ -125,7 +126,9 @@ export default function SuperAdminDashboardLayout({
       <main className="lg:pl-64">
         {/* pb-24 en móvil para dejar aire a la bottom nav flotante */}
         <div className="mx-auto max-w-[1600px] px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-8 lg:pt-8">
-          {children}
+          {/* RequireAuth redirige a /unete si no hay sesión — cierra el hueco
+              donde el user en un dominio nuevo se quedaba spinning forever. */}
+          <RequireAuth>{children}</RequireAuth>
         </div>
       </main>
 
