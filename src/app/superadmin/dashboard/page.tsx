@@ -1335,12 +1335,8 @@ export default function SuperAdminDashboardPage() {
         </div>
       )}
 
-      {loading && !data && (
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Cargando información…
-        </div>
-      )}
+      {/* Loading UI real vive en `loading.tsx` — se muestra durante la
+          navegación de App Router antes de que este componente monte. */}
 
       {/* KPIs — 2x2 en móvil, 4 columnas en desktop */}
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

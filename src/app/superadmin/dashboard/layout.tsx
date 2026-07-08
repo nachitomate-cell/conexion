@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   ListChecks,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ const NAV: NavItem[] = [
   { href: "/superadmin/dashboard#clientes", label: "Clientes", icon: Building2 },
   { href: "/superadmin/dashboard/tareas", label: "Tareas", icon: ListChecks },
   { href: "/superadmin/dashboard/equipo", label: "Equipo", icon: Users },
+  { href: "/superadmin/dashboard/desarrollar", label: "Desarrollar", icon: Wrench },
   { href: "/superadmin/dashboard#alertas", label: "Alertas", icon: ShieldAlert },
 ];
 
@@ -97,14 +99,14 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] font-medium transition-all duration-200 active:scale-95",
+              "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium transition-all duration-200 active:scale-95",
               active
                 ? "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30"
                 : "text-slate-400 hover:text-white"
             )}
           >
             <Icon className="h-4 w-4" strokeWidth={2.25} />
-            <span>{item.label}</span>
+            <span className="max-w-full truncate">{item.label}</span>
           </Link>
         );
       })}

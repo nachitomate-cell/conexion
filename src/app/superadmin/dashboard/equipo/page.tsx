@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { SkeletonListRow } from "@/components/superadmin/Skeletons";
 import type { TeamMember, TeamRole } from "@/types";
 
 // =========================================================
@@ -638,10 +639,13 @@ export default function EquipoPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Cargando miembros…
-        </div>
+        <ul className="space-y-2.5 animate-in fade-in duration-200">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <li key={i}>
+              <SkeletonListRow />
+            </li>
+          ))}
+        </ul>
       ) : members.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
           <CircleDashed className="h-5 w-5 text-slate-500" />

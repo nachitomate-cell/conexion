@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { TaskPushToggle } from "@/components/TaskPushToggle";
+import { SkeletonListRow } from "@/components/superadmin/Skeletons";
 import type { Task } from "@/types";
 import type { AdminRow } from "@/app/api/superadmin/admins/route";
 
@@ -655,9 +656,10 @@ export default function TareasPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Cargando tareas…
+        <div className="space-y-2.5 animate-in fade-in duration-200">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonListRow key={i} />
+          ))}
         </div>
       ) : (
         <div key={tab} className="space-y-6 animate-in fade-in duration-300">
