@@ -23,6 +23,15 @@ interface FormLocal {
   clubName: string;
   joinDescription: string;
   emojis: string;
+  // Info de contacto para la vista pública /carta
+  address: string;
+  schedule: string;
+  phone: string;
+  email: string;
+  facebookUrl: string;
+  // Imágenes del hero público
+  logoUrl: string;
+  backgroundUrl: string;
 }
 
 function LocalAdminInner() {
@@ -37,6 +46,13 @@ function LocalAdminInner() {
     clubName: vendor.copy.clubName,
     joinDescription: vendor.copy.joinDescription,
     emojis: vendor.copy.emojis,
+    address: "",
+    schedule: "",
+    phone: "",
+    email: "",
+    facebookUrl: "",
+    logoUrl: vendor.theme.logoUrl ?? "",
+    backgroundUrl: "",
   }));
   const [busy, setBusy] = useState(false);
 
@@ -60,6 +76,13 @@ function LocalAdminInner() {
             joinDescription?: string;
             emojis?: string;
           };
+          address: string;
+          schedule: string;
+          phone: string;
+          email: string;
+          facebookUrl: string;
+          logoUrl: string;
+          backgroundUrl: string;
         }>;
         setForm((f) => ({
           nombre: raw.nombre ?? f.nombre,
@@ -70,6 +93,13 @@ function LocalAdminInner() {
           clubName: raw.copy?.clubName ?? f.clubName,
           joinDescription: raw.copy?.joinDescription ?? f.joinDescription,
           emojis: raw.copy?.emojis ?? f.emojis,
+          address: raw.address ?? f.address,
+          schedule: raw.schedule ?? f.schedule,
+          phone: raw.phone ?? f.phone,
+          email: raw.email ?? f.email,
+          facebookUrl: raw.facebookUrl ?? f.facebookUrl,
+          logoUrl: raw.logoUrl ?? f.logoUrl,
+          backgroundUrl: raw.backgroundUrl ?? f.backgroundUrl,
         }));
       } catch {
         // sin permisos / no existe → nos quedamos con los valores estáticos
@@ -100,6 +130,13 @@ function LocalAdminInner() {
             joinDescription: form.joinDescription.trim(),
             emojis: form.emojis.trim(),
           },
+          address: form.address.trim(),
+          schedule: form.schedule.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim(),
+          facebookUrl: form.facebookUrl.trim(),
+          logoUrl: form.logoUrl.trim(),
+          backgroundUrl: form.backgroundUrl.trim(),
         },
         { merge: true }
       );
@@ -203,6 +240,139 @@ function LocalAdminInner() {
                 })
               }
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contacto público — se muestra en el modal "Ver más" de /carta */}
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Contacto público (carta digital)
+          </h2>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="address">Dirección</Label>
+            <Input
+              id="address"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              placeholder="Av. Providencia 1234, Providencia, Santiago"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="schedule">Horario</Label>
+            <Input
+              id="schedule"
+              value={form.schedule}
+              onChange={(e) => setForm({ ...form, schedule: e.target.value })}
+              placeholder="Lun-Vie 12:00-23:00 · Sáb-Dom 13:00-01:00"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="contacto@negocio.cl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="fb">Facebook (URL completa)</Label>
+            <Input
+              id="fb"
+              type="url"
+              value={form.facebookUrl}
+              onChange={(e) =>
+                setForm({ ...form, facebookUrl: e.target.value })
+              }
+              placeholder="https://facebook.com/tu-negocio"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Imágenes del hero público */}
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Imágenes del hero (carta pública)
+          </h2>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="logoUrl">Logo (URL)</Label>
+            <Input
+              id="logoUrl"
+              type="url"
+              value={form.logoUrl}
+              onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+              placeholder="https://…/logo.png"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Se muestra circular sobre el hero. Idealmente cuadrado.
+            </p>
+            {form.logoUrl && (
+              <div className="mt-1 flex h-16 w-16 items-center justify-center rounded-full border bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.logoUrl}
+                  alt="preview logo"
+                  className="h-full w-full rounded-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="bgUrl">Imagen de fondo del hero (URL)</Label>
+            <Input
+              id="bgUrl"
+              type="url"
+              value={form.backgroundUrl}
+              onChange={(e) =>
+                setForm({ ...form, backgroundUrl: e.target.value })
+              }
+              placeholder="https://…/hero.jpg"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Idealmente horizontal (1600×600 o similar). Si no la pones, se
+              usa un gradiente con el color primario del local.
+            </p>
+            {form.backgroundUrl && (
+              <div className="mt-1 aspect-[16/6] w-full overflow-hidden rounded-lg border bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.backgroundUrl}
+                  alt="preview fondo"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
