@@ -10,15 +10,36 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getMessaging, type Messaging } from "firebase-admin/messaging";
 
+/**
+ * Normaliza el valor de `FIREBASE_ADMIN_PRIVATE_KEY` — tolerante a los tres
+ * errores más comunes al pegarlo en Vercel/otro dashboard:
+ *   1. Quedó con comillas envolventes: `"-----BEGIN..."`
+ *   2. Quedó en una sola línea con `\n` literales (dotenv style)
+ *   3. Quedó multi-línea real (formato PEM nativo)
+ * Todas terminan como PEM válido con newlines reales.
+ */
+function normalizePrivateKey(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  let key = raw.trim();
+  // Quita comillas envolventes.
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+  // \n literal → newline real.
+  key = key.replace(/\\n/g, "\n");
+  return key;
+}
+
 function buildApp(): App {
   if (getApps().length > 0) return getApp();
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  // La private key suele venir con \n escapados desde el dashboard de Vercel.
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n"
+  const privateKey = normalizePrivateKey(
+    process.env.FIREBASE_ADMIN_PRIVATE_KEY
   );
 
   if (!projectId || !clientEmail || !privateKey) {

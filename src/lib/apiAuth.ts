@@ -29,8 +29,17 @@ export async function requireUser(
   let decoded;
   try {
     decoded = await adminAuth.verifyIdToken(token);
-  } catch {
-    throw new AuthError("Token inválido o expirado.");
+  } catch (e) {
+    // Devolvemos el motivo concreto para poder diagnosticar rápido:
+    //   - "auth/id-token-expired"      → el token venció (renovar en cliente)
+    //   - "auth/argument-error"        → private key mal formada o project mismatch
+    //   - "auth/id-token-revoked"      → el usuario cerró sesión / lo baneamos
+    const code = (e as { code?: string; message?: string })?.code;
+    const msg = (e as { message?: string })?.message;
+    console.error("[requireUser] verifyIdToken falló", { code, msg });
+    throw new AuthError(
+      `Token inválido o expirado.${code ? ` (${code})` : ""}`
+    );
   }
 
   const snap = await adminDb.collection("usuarios").doc(decoded.uid).get();
