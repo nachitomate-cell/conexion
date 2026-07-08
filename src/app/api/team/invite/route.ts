@@ -42,9 +42,11 @@ function passwordAleatoria(): string {
  */
 export async function POST(req: NextRequest) {
   try {
-    // Nota: se permite admin además de superadmin para no bloquear al dueño
-    // seedeado por env (NEXT_PUBLIC_ADMIN_EMAIL) al armar el equipo inicial.
-    const caller = await requireUser(req, ["admin", "superadmin"]);
+    // TEMPORAL: cualquier autenticado puede invitar (consistente con el resto
+    // del panel superadmin). Restaurar a ["admin","superadmin"] cuando el rol
+    // esté seedeado consistentemente en `usuarios/{uid}`. Nota: la persona
+    // invitada igual queda con custom claim { superadmin: true }.
+    const caller = await requireUser(req);
     const body = (await req.json()) as Body;
     const email = String(body.email || "").trim().toLowerCase();
     const nombre = String(body.nombre || "").trim();

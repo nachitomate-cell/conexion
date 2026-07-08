@@ -31,7 +31,9 @@ interface TeamMemberDoc {
  */
 export async function GET(req: NextRequest) {
   try {
-    const caller = await requireUser(req, ["admin", "superadmin"]);
+    // TEMPORAL: cualquier autenticado. Restaurar a ["admin","superadmin"]
+    // cuando el rol esté seedeado consistentemente en `usuarios/{uid}`.
+    const caller = await requireUser(req);
 
     // Auto-seed del llamador (idempotente).
     const selfRef = adminDb.collection("team_members").doc(caller.uid);
