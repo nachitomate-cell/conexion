@@ -62,8 +62,13 @@ export function RequireAuth({
       return;
     }
 
-    // C. Rol insuficiente
-    if (roles && !roles.includes(usuario.rol)) {
+    // C. Rol insuficiente. Superadmin es operador de plataforma y pasa
+    // cualquier control de rol (mismo criterio que apiAuth.requireUser).
+    if (
+      roles &&
+      usuario.rol !== "superadmin" &&
+      !roles.includes(usuario.rol)
+    ) {
       console.warn(
         `[RequireAuth] Rol '${usuario.rol}' no autorizado (se requiere ` +
           `${roles.join("|")}). Redirigiendo a home del rol.`
@@ -92,7 +97,12 @@ export function RequireAuth({
     );
   }
 
-  if (roles && !roles.includes(usuario.rol)) return <FullLoader />;
+  if (
+    roles &&
+    usuario.rol !== "superadmin" &&
+    !roles.includes(usuario.rol)
+  )
+    return <FullLoader />;
 
   return <>{children}</>;
 }
