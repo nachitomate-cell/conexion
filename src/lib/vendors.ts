@@ -16,6 +16,8 @@ export const VENDORS: Record<string, Vendor> = {
     sellosParaPremio: 10,
     activo: true,
     status: "funcionando",
+    rubro: "sushi",
+    zona: "Curauma",
     theme: {
       primaryColor: "#4f46e5",
       primaryHsl: "252 30% 62%",
@@ -39,6 +41,8 @@ export const VENDORS: Record<string, Vendor> = {
     sellosParaPremio: 12,
     activo: true,
     status: "por_presentar",
+    rubro: "bar",
+    zona: "Curauma",
     theme: {
       primaryColor: "#991b1b",
       primaryHsl: "358 62% 42%",
@@ -63,8 +67,11 @@ export const VENDORS: Record<string, Vendor> = {
     instagram: "burger.xyz",
     emoji: "🍔",
     sellosParaPremio: 10,
-    activo: false,
-    status: "propuesta",
+    activo: true,
+    status: "por_presentar",
+    rubro: "sangucheria",
+    zona: "Viña Centro",
+    demo: true,
     theme: {
       primaryColor: "#ea580c",
       primaryHsl: "20 90% 48%",
@@ -84,8 +91,11 @@ export const VENDORS: Record<string, Vendor> = {
     instagram: "cafecentral.cl",
     emoji: "☕",
     sellosParaPremio: 8,
-    activo: false,
-    status: "propuesta",
+    activo: true,
+    status: "funcionando",
+    rubro: "cafeteria",
+    zona: "Valparaíso",
+    demo: true,
     theme: {
       primaryColor: "#78350f",
       primaryHsl: "27 76% 26%",
@@ -108,6 +118,8 @@ export const VENDORS: Record<string, Vendor> = {
     sellosParaPremio: 12,
     activo: true,
     status: "por_presentar",
+    rubro: "restaurante",
+    zona: "Curauma",
     theme: {
       primaryColor: "#991b1b",
       primaryHsl: "0 70% 35%",
@@ -123,6 +135,58 @@ export const VENDORS: Record<string, Vendor> = {
       joinDescription:
         "Disfruta la auténtica gastronomía peruana. Suma sellos en tus visitas y canjea pisco sours, ceviches y experiencias únicas. 🇵🇪🍹",
       emojis: "🇵🇪🍹🍽️",
+    },
+  },
+  // ── Tenants de demostración del marketplace (demo: true) ──
+  barberiafaro: {
+    id: "barberiafaro",
+    nombre: "Barbería El Faro",
+    slug: "barberiafaro",
+    instagram: "barberia.elfaro",
+    whatsapp: "56900000000",
+    emoji: "💈",
+    sellosParaPremio: 10,
+    activo: true,
+    status: "funcionando",
+    rubro: "barberia",
+    zona: "Reñaca",
+    demo: true,
+    theme: {
+      primaryColor: "#0f766e",
+      primaryHsl: "175 77% 26%",
+      logoUrl: "/logos/sushipro.svg",
+      logoWidth: 128,
+    },
+    copy: {
+      clubName: "EL FARO CLUB",
+      joinDescription:
+        "Un sello por cada corte: el 10° va gratis, más productos de barba y prioridad en la agenda.",
+      emojis: "💈✂️",
+    },
+  },
+  gelatopacifico: {
+    id: "gelatopacifico",
+    nombre: "Gelato Pacífico",
+    slug: "gelatopacifico",
+    instagram: "gelato.pacifico",
+    emoji: "🍦",
+    sellosParaPremio: 8,
+    activo: true,
+    status: "por_presentar",
+    rubro: "heladeria",
+    zona: "Av. San Martín",
+    demo: true,
+    theme: {
+      primaryColor: "#db2777",
+      primaryHsl: "330 70% 50%",
+      logoUrl: "/logos/sushipro.svg",
+      logoWidth: 128,
+    },
+    copy: {
+      clubName: "PACÍFICO CLUB",
+      joinDescription:
+        "Suma sellos con cada copa y canjea helados dobles, toppings y café de la casa.",
+      emojis: "🍦🌊",
     },
   },
 };

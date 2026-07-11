@@ -61,4 +61,4 @@ export const GALERIA: ItemGaleria[] = [
 ];
 
 /** Imagen grande de marca/destacado (hero del socio). */
-export const DESTACADO = "/locales/sushipro/destacado.png";
+export const DESTACADO = "/locales/sushipro/destacado.jpg";

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { requireUser, AuthError } from "@/lib/apiAuth";
-import type { VendorStatus } from "@/types";
+import { RUBRO_META } from "@/lib/mercadoVina";
+import type { ProspectoRubro, VendorStatus } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ const PLAN_VALIDOS = ["starter", "growth", "scale", "enterprise"] as const;
 const ENTORNO_VALIDOS = ["staging", "produccion"] as const;
 const ID_RE = /^[a-z0-9]{2,32}$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+const RUBROS_VALIDOS = Object.keys(RUBRO_META);
 
 interface CreateTenantBody {
   id?: unknown;
@@ -29,6 +31,9 @@ interface CreateTenantBody {
   ownerEmail?: unknown;
   nota?: unknown;
   mrr?: unknown;
+  // Directorio del marketplace (/explora)
+  rubro?: unknown;
+  zona?: unknown;
 }
 
 export async function POST(req: NextRequest) {
@@ -94,6 +99,11 @@ export async function POST(req: NextRequest) {
       ownerEmail: String(body.ownerEmail || "").trim() || null,
       nota: String(body.nota || "").trim() || null,
       mrr: Number(body.mrr) || 0,
+      // Directorio del marketplace: rubro validado + zona libre.
+      rubro: RUBROS_VALIDOS.includes(String(body.rubro))
+        ? (String(body.rubro) as ProspectoRubro)
+        : null,
+      zona: String(body.zona || "").trim().slice(0, 60) || null,
       activo: true,
       createdAt: FieldValue.serverTimestamp(),
     };
@@ -133,6 +143,9 @@ interface PatchTenantBody {
   joinDescription?: unknown;
   emojis?: unknown;
   sellosParaPremio?: unknown;
+  // Directorio del marketplace (/explora)
+  rubro?: unknown;
+  zona?: unknown;
 }
 
 /**
@@ -235,6 +248,16 @@ export async function PATCH(req: NextRequest) {
       }
       payload.sellosParaPremio = n;
     }
+
+    // Directorio del marketplace
+    if (body.rubro !== undefined) {
+      const r = String(body.rubro || "").trim();
+      if (r && !RUBROS_VALIDOS.includes(r)) {
+        return NextResponse.json({ error: "Rubro inválido." }, { status: 400 });
+      }
+      payload.rubro = r || null;
+    }
+    setStr("zona", 60);
 
     if (Object.keys(payload).length === 0) {
       return NextResponse.json({ error: "Nada que actualizar." }, { status: 400 });

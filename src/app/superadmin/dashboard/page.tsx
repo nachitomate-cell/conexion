@@ -36,7 +36,8 @@ import {
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import type { VendorStatus } from "@/types";
+import { RUBRO_META } from "@/lib/mercadoVina";
+import type { ProspectoRubro, VendorStatus } from "@/types";
 
 // =========================================================
 // Tipos — matchean la respuesta de /api/superadmin/overview
@@ -747,6 +748,8 @@ function NewTenantModal({
   const [entorno, setEntorno] = useState<EntornoTier>("staging");
   const [status, setStatus] = useState<VendorStatus>("propuesta");
   const [ownerEmail, setOwnerEmail] = useState("");
+  const [rubro, setRubro] = useState<"" | ProspectoRubro>("");
+  const [zona, setZona] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -760,6 +763,8 @@ function NewTenantModal({
     setEntorno("staging");
     setStatus("propuesta");
     setOwnerEmail("");
+    setRubro("");
+    setZona("");
     setErr(null);
   };
 
@@ -788,6 +793,8 @@ function NewTenantModal({
           ownerEmail,
           nota: status === "propuesta" ? "Propuesta recién creada." : "",
           mrr: 0,
+          rubro: rubro || null,
+          zona: zona.trim() || null,
         }),
       });
       const json = await res.json();
@@ -903,6 +910,41 @@ function NewTenantModal({
               </select>
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-slate-400">
+                Rubro
+              </label>
+              <select
+                value={rubro}
+                onChange={(e) => setRubro(e.target.value as "" | ProspectoRubro)}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
+              >
+                <option value="">Sin rubro</option>
+                {Object.entries(RUBRO_META).map(([id, meta]) => (
+                  <option key={id} value={id}>
+                    {meta.emoji} {meta.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-slate-400">
+                Zona / barrio
+              </label>
+              <input
+                value={zona}
+                onChange={(e) => setZona(e.target.value)}
+                placeholder="Viña Centro"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
+              />
+            </div>
+          </div>
+          <p className="-mt-2 text-[11px] text-slate-500">
+            Con rubro y zona el local aparece bien clasificado en el directorio
+            Explora del marketplace.
+          </p>
 
           <div className="space-y-1.5">
             <label className="text-[11px] uppercase tracking-widest text-slate-400">

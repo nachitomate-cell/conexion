@@ -217,6 +217,28 @@ export default function HomePage() {
         </Button>
       </div>
 
+      {/* Marketplace de sellos — Fase 1: descubre otros clubes */}
+      <Link
+        href="/explora"
+        className="flex items-center gap-3 rounded-3xl border bg-secondary/50 p-4 transition-shadow hover:shadow-md"
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-background text-2xl shadow-sm">
+          🏪
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+            Nuevo
+          </p>
+          <p className="font-headline font-extrabold leading-tight">
+            Explora los clubes del barrio
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Tu misma cuenta, sellos en todos los locales.
+          </p>
+        </div>
+        <span className="shrink-0 font-semibold text-primary">Ver →</span>
+      </Link>
+
       {/* Recompensas destacadas */}
       {destacados.length > 0 && (
         <section className="space-y-3">
@@ -260,7 +282,7 @@ export default function HomePage() {
       <section className="overflow-hidden rounded-3xl border bg-secondary/50">
         <div className="relative aspect-[16/9]">
           <MediaSlot
-            src={`/locales/${vendor.slug}/destacado.png`}
+            src={`/locales/${vendor.slug}/destacado.jpg`}
             alt={vendor.nombre}
             label="Imagen del local"
           />

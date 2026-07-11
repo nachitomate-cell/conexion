@@ -8,6 +8,7 @@ import {
   Building2,
   ShieldAlert,
   ListChecks,
+  TrendingUp,
   Users,
   Wrench,
   type LucideIcon,
@@ -27,6 +28,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/superadmin/dashboard", label: "Panel", icon: LayoutDashboard },
   { href: "/superadmin/dashboard#clientes", label: "Clientes", icon: Building2 },
+  { href: "/superadmin/dashboard/proyeccion", label: "Proyección", icon: TrendingUp },
   { href: "/superadmin/dashboard/tareas", label: "Tareas", icon: ListChecks },
   { href: "/superadmin/dashboard/equipo", label: "Equipo", icon: Users },
   { href: "/superadmin/dashboard/desarrollar", label: "Desarrollar", icon: Wrench },

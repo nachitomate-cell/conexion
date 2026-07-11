@@ -116,8 +116,27 @@ function UneteInner() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-secondary/40 to-background px-5 py-10">
-      <div className="mb-6 flex flex-col items-center text-center">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-5 py-10">
+      {/* Loop de ambiente — una sola capa a pantalla completa: sin costuras
+          ni barras. El sujeto va centrado con aire arriba, así que el recorte
+          de los bordes es imperceptible en cualquier proporción. */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+      >
+        <source src="/unete-loop.mp4" type="video/mp4" />
+      </video>
+      {/* Velo suave — deja ver el video y mantiene el texto legible. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-b from-background/45 via-background/35 to-background/75"
+      />
+
+      <div className="relative mb-6 flex flex-col items-center text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={vendor.theme.logoUrl}
@@ -135,7 +154,7 @@ function UneteInner() {
       </div>
 
       {permissionError && firebaseUser && (
-        <div className="mb-4 w-full max-w-sm rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+        <div className="relative mb-4 w-full max-w-sm rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
           <p className="font-semibold">Firestore está rechazando la lectura de tu perfil.</p>
           <p className="mt-1 opacity-80">
             Las reglas del proyecto no están permitiendo leer/crear{" "}
@@ -149,7 +168,7 @@ function UneteInner() {
         </div>
       )}
 
-      <div className="w-full max-w-sm rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="relative w-full max-w-sm rounded-2xl border bg-card p-5 shadow-sm">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Entrar</TabsTrigger>
@@ -260,7 +279,7 @@ function UneteInner() {
         </Tabs>
       </div>
 
-      <p className="mt-5 max-w-xs text-center text-xs text-muted-foreground">
+      <p className="relative mt-5 max-w-xs text-center text-xs text-muted-foreground">
         Al continuar aceptas nuestros{" "}
         <Link href="/terminos" className="underline">
           términos

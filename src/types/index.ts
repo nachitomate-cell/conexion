@@ -234,6 +234,75 @@ export interface Task {
   dueDate: number | null; // epoch ms (día objetivo)
 }
 
+/** Rubro de un prospecto dentro del mercado local (módulo Proyección). */
+export type ProspectoRubro =
+  | "sushi"
+  | "cafeteria"
+  | "barberia"
+  | "heladeria"
+  | "sangucheria"
+  | "pizzeria"
+  | "bar"
+  | "restaurante"
+  | "fitness";
+
+/** Etapa del prospecto en el embudo comercial. */
+export type ProspectoEstado =
+  | "por_contactar"
+  | "contactado"
+  | "reunion"
+  | "propuesta_enviada"
+  | "convertido"
+  | "descartado";
+
+export type ProspectoPrioridad = "alta" | "media" | "baja";
+
+/**
+ * Marca del mercado objetivo a la que se le puede ofrecer la plataforma.
+ * Colección Firestore: `prospectos/{id}`. El seed inicial viene del análisis
+ * de mercado de Viña del Mar (`src/lib/mercadoVina.ts`).
+ */
+export interface Prospecto {
+  id: string;
+  nombre: string;
+  rubro: ProspectoRubro;
+  /** Zona/barrio dentro del Gran Viña (Viña Centro, Recreo, Reñaca, etc.). */
+  zona: string;
+  direccion: string | null;
+  /** Por qué el producto le calza a esta marca (fit comercial). */
+  notas: string | null;
+  prioridad: ProspectoPrioridad;
+  planSugerido: string; // starter | growth | scale
+  /** MRR estimado si se convierte (CLP). */
+  mrrPotencial: number;
+  estado: ProspectoEstado;
+  /** Origen del dato: seed del análisis de mercado o carga manual. */
+  fuente: string | null;
+  createdAt: number; // epoch ms
+  updatedAt: number | null; // epoch ms
+}
+
+/**
+ * Ruta gamificada del marketplace (mecánica portada de la Ruta BAC de
+ * Patio Curauma): el usuario visita locales participantes, junta al menos
+ * un sello en cada uno y al completar el mínimo canjea el premio de la ruta.
+ * El progreso se deriva de `sellosLocales` — no requiere contadores nuevos.
+ */
+export interface Ruta {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  emoji: string;
+  /** Vendors participantes (ids del registro estático u overlay Firestore). */
+  vendorIds: string[];
+  /** Locales distintos que hay que visitar para completar la ruta. */
+  minLocales: number;
+  premioTexto: string;
+  activa: boolean;
+  /** Marca/patrocinador opcional ("presentada por…"). */
+  patrocinador?: string;
+}
+
 /** Local/comercio dentro del multitenant. */
 export interface Vendor {
   id: string;
@@ -246,6 +315,12 @@ export interface Vendor {
   activo: boolean;
   /** Etapa en el pipeline (propuesta → por_presentar → funcionando). */
   status: VendorStatus;
+  /** Rubro para el directorio del marketplace (/explora). */
+  rubro?: ProspectoRubro;
+  /** Zona/barrio para el directorio del marketplace. */
+  zona?: string;
+  /** true = tenant de demostración: se muestra en demos, desactivar en prod. */
+  demo?: boolean;
   theme: VendorTheme;
   copy: VendorCopy;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Compass } from "lucide-react";
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -44,27 +44,38 @@ export function Header() {
           />
         </Link>
 
-        {firebaseUser ? (
+        <div className="flex items-center gap-1">
+          {/* Marketplace de sellos — directorio de clubes */}
           <Link
-            href="/notificacion"
-            className="relative rounded-full p-2 text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="Notificaciones"
+            href="/explora"
+            className="rounded-full p-2 text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Explorar clubes"
           >
-            <Bell className="h-5 w-5" />
-            {noLeidas > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                {noLeidas > 9 ? "9+" : noLeidas}
-              </span>
-            )}
+            <Compass className="h-5 w-5" />
           </Link>
-        ) : (
-          <Link
-            href="/unete"
-            className="rounded-full bg-foreground px-4 py-1.5 text-sm font-bold text-background transition-colors hover:bg-foreground/90"
-          >
-            Entrar
-          </Link>
-        )}
+
+          {firebaseUser ? (
+            <Link
+              href="/notificacion"
+              className="relative rounded-full p-2 text-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label="Notificaciones"
+            >
+              <Bell className="h-5 w-5" />
+              {noLeidas > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  {noLeidas > 9 ? "9+" : noLeidas}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/unete"
+              className="ml-1 rounded-full bg-foreground px-4 py-1.5 text-sm font-bold text-background transition-colors hover:bg-foreground/90"
+            >
+              Entrar
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );
