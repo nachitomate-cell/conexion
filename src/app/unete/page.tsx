@@ -62,6 +62,11 @@ function UneteInner() {
   const colorBoton = esExpovino ? "#d9a441" : vendor.theme.primaryColor;
   const colorBotonTexto = esExpovino ? "#2a0a14" : undefined;
 
+  // En el evento, el registro parte con una bienvenida a video completo
+  // (la tarjeta blanca tapa todo el viewport móvil) — el form sale a un tap.
+  const [etapa, setEtapa] = useState<"bienvenida" | "form">("bienvenida");
+  const bienvenida = esExpovino && etapa === "bienvenida";
+
   // login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,7 +146,10 @@ function UneteInner() {
 
   return (
     <div
-      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-5 py-10"
+      className={
+        "relative flex min-h-dvh flex-col items-center overflow-hidden bg-background px-5 " +
+        (bienvenida ? "justify-between pb-12 pt-24" : "justify-center py-10")
+      }
       style={
         esExpovino
           ? // Fondo burdeos del evento + botones/acentos en oro (pisa --primary).
@@ -181,7 +189,10 @@ function UneteInner() {
       <div
         aria-hidden
         className={
-          esExpovino
+          bienvenida
+            ? // Bienvenida: el video manda — velo mínimo, solo anclas arriba/abajo.
+              "absolute inset-0 bg-gradient-to-b from-[#2a0a14]/50 via-transparent to-[#2a0a14]/85"
+            : esExpovino
             ? "absolute inset-0 bg-gradient-to-b from-[#2a0a14]/45 via-[#2a0a14]/15 to-[#2a0a14]/80"
             : "absolute inset-0 bg-gradient-to-b from-background/45 via-background/35 to-background/75"
         }
@@ -220,6 +231,8 @@ function UneteInner() {
         </div>
       )}
 
+      {!bienvenida && (
+        <>
       {permissionError && firebaseUser && (
         <div className="relative mb-4 w-full max-w-sm rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
           <p className="font-semibold">Firestore está rechazando la lectura de tu perfil.</p>
@@ -362,6 +375,50 @@ function UneteInner() {
         </Link>
         .
       </p>
+
+      {/* Volver a la bienvenida (solo evento) */}
+      {esExpovino && (
+        <button
+          type="button"
+          onClick={() => setEtapa("bienvenida")}
+          className="relative mt-4 text-[12px] font-semibold uppercase tracking-wider text-[#f6ece0]/50"
+        >
+          ← Volver
+        </button>
+      )}
+        </>
+      )}
+
+      {/* ── Bienvenida del evento: video protagonista, CTAs al fondo ── */}
+      {bienvenida && (
+        <div className="relative w-full max-w-sm space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              setTab("registro");
+              setEtapa("form");
+            }}
+            className="w-full rounded-full py-4 font-headline text-[15px] font-extrabold shadow-lg transition-transform active:scale-[0.98]"
+            style={{ backgroundColor: "#d9a441", color: "#2a0a14" }}
+          >
+            Crear mi cuenta 🎟️
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTab("login");
+              setEtapa("form");
+            }}
+            className="w-full rounded-full border py-4 font-headline text-[15px] font-extrabold text-[#f6ece0] transition-transform active:scale-[0.98]"
+            style={{ borderColor: "rgba(246,236,224,0.35)" }}
+          >
+            Ya tengo cuenta
+          </button>
+          <p className="pt-1 text-center text-[11px] leading-relaxed text-[#f6ece0]/50">
+            Gratis · sin descargar apps · tus datos protegidos
+          </p>
+        </div>
+      )}
     </div>
   );
 }
