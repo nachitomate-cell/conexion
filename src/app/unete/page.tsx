@@ -52,12 +52,18 @@ function UneteInner() {
   const [telefono, setTelefono] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
 
-  // Si ya está logueado, redirige según rol.
+  // Si ya está logueado, redirige según rol — o al destino `next` si viene
+  // uno interno (ej: el stand de ExpoVino que escaneó antes de registrarse).
   useEffect(() => {
     if (!loading && firebaseUser && usuario) {
-      router.replace(homeForRole(usuario.rol));
+      const next = params.get("next");
+      router.replace(
+        next && next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : homeForRole(usuario.rol)
+      );
     }
-  }, [loading, firebaseUser, usuario, router]);
+  }, [loading, firebaseUser, usuario, router, params]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();

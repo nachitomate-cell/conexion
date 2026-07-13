@@ -7,7 +7,14 @@ import { BottomNav } from "@/components/BottomNav";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 // Rutas que se muestran sin el chrome (header + bottom nav).
-const BARE_ROUTES = ["/unete", "/admin/dashboard", "/superadmin", "/carta"];
+// /expovino es la vista exclusiva del evento: branding propio, full-bleed.
+const BARE_ROUTES = [
+  "/unete",
+  "/admin/dashboard",
+  "/superadmin",
+  "/carta",
+  "/expovino",
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

@@ -29,6 +29,15 @@ export interface Usuario {
   baneado: boolean;
   recompensaDisponible: boolean;
   sellosLocales?: Record<string, number>; // sellos por vendor/local
+  /** Pasaporte ExpoVino 2026: sello por stand (ver src/lib/expovino.ts). */
+  expovino?: Record<string, { at: number; rating: number | null }>;
+  /** Contador plano de sellos ExpoVino — habilita el query del sorteo. */
+  expovinoSellos?: number;
+  /** Preinscripción al evento (antes del 1 de agosto). */
+  expovinoPreinscrito?: boolean;
+  expovinoPreinscritoAt?: number;
+  /** Encuesta de salida ExpoVino ("¿volverías?"), 1-5. */
+  expovinoNps?: number;
   referidoPor?: string;
   createdAt: Timestamp;
 }

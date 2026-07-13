@@ -7,6 +7,12 @@ import { resolveTenantFromHost, TENANT_HEADER } from "@/lib/tenant";
  */
 const PANEL_HOSTS = new Set(["panel.synaptechspa.cl", "panel.localhost"]);
 
+/** Host del evento — la raíz aterriza directo en el Pasaporte ExpoVino. */
+const EXPOVINO_HOSTS = new Set([
+  "expovino.synaptechspa.cl",
+  "expovino.localhost",
+]);
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
@@ -15,6 +21,13 @@ export function middleware(req: NextRequest) {
   if (PANEL_HOSTS.has(host) && (pathname === "/" || pathname === "")) {
     const url = req.nextUrl.clone();
     url.pathname = "/superadmin/dashboard";
+    return NextResponse.redirect(url, 307);
+  }
+
+  // Host del evento: `expovino.synaptechspa.cl/` → pasaporte (link del IG).
+  if (EXPOVINO_HOSTS.has(host) && (pathname === "/" || pathname === "")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/expovino";
     return NextResponse.redirect(url, 307);
   }
 
