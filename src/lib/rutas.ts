@@ -2,7 +2,7 @@ import type { Ruta, Usuario, Vendor } from "@/types";
 
 /**
  * Rutas del marketplace — mecánica portada de la Ruta BAC de Patio Curauma
- * (27 bares de Valparaíso): visita locales, junta el pasaporte, gana.
+ * (26 bares de Valparaíso): visita locales, junta el pasaporte, gana.
  *
  * Registro estático por ahora (mismo camino de evolución que VENDORS:
  * cuando haga falta alta sin deploy, se agrega el overlay Firestore `rutas`).
@@ -91,7 +91,7 @@ export const REDES_EXTERNAS = [
     nombre: "Ruta BAC · Valparaíso",
     emoji: "🍷",
     descripcion:
-      "27 bares y cocinas de los cerros Alegre y Concepción. Tapa + cóctel x $6.000.",
+      "26 bares y cocinas de los cerros Alegre y Concepción. Tapa + cóctel x $6.000.",
     url: "https://clubpatiocurauma.synaptechspa.cl/ruta-bac",
   },
 ] as const;

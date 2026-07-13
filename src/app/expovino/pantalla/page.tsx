@@ -333,7 +333,7 @@ export default function PantallaExpovinoPage() {
         </span>
       </p>
       <p className="mt-6 text-[clamp(16px,1.8vw,28px)] opacity-70">
-        Sellos digitales · carta QR · rutas gamificadas — Ruta BAC (27 bares) ·
+        Sellos digitales · carta QR · rutas gamificadas — Ruta BAC (26 bares) ·
         +20 barberías · Club Patio Curauma
       </p>
       <p
