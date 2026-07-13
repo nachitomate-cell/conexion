@@ -58,6 +58,10 @@ function UneteInner() {
     if (esExpovino) setTab("registro");
   }, [esExpovino]);
 
+  // CTA: oro del evento (con texto burdeos) o el color del tenant.
+  const colorBoton = esExpovino ? "#d9a441" : vendor.theme.primaryColor;
+  const colorBotonTexto = esExpovino ? "#2a0a14" : undefined;
+
   // login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -160,6 +164,13 @@ function UneteInner() {
         playsInline
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+        style={
+          esExpovino
+            ? // El loop de bodega es oscuro: se levanta un poco para que se
+              // aprecie detrás del velo.
+              { filter: "brightness(1.35) saturate(1.1)" }
+            : undefined
+        }
       >
         <source
           src={esExpovino ? "/expovino-loop.mp4" : "/unete-loop.mp4"}
@@ -171,7 +182,7 @@ function UneteInner() {
         aria-hidden
         className={
           esExpovino
-            ? "absolute inset-0 bg-gradient-to-b from-[#2a0a14]/70 via-[#2a0a14]/55 to-[#2a0a14]/95"
+            ? "absolute inset-0 bg-gradient-to-b from-[#2a0a14]/45 via-[#2a0a14]/15 to-[#2a0a14]/80"
             : "absolute inset-0 bg-gradient-to-b from-background/45 via-background/35 to-background/75"
         }
       />
@@ -259,7 +270,7 @@ function UneteInner() {
                 type="submit"
                 className="w-full"
                 disabled={busy}
-                style={{ backgroundColor: vendor.theme.primaryColor }}
+                style={{ backgroundColor: colorBoton, color: colorBotonTexto }}
               >
                 {busy ? "Entrando…" : `Entrar ${vendor.copy.emojis.slice(0, 2)}`}
               </Button>
@@ -326,7 +337,7 @@ function UneteInner() {
                 type="submit"
                 className="w-full"
                 disabled={busy}
-                style={{ backgroundColor: vendor.theme.primaryColor }}
+                style={{ backgroundColor: colorBoton, color: colorBotonTexto }}
               >
                 {busy ? "Creando…" : "Crear mi cuenta 🎉"}
               </Button>
