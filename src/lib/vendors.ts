@@ -23,6 +23,7 @@ export const VENDORS: Record<string, Vendor> = {
       primaryHsl: "252 30% 62%",
       logoUrl: "/logos/sushipro.svg",
       logoWidth: 128,
+      heroVideoUrl: "/locales/sushipro/hero.mp4",
     },
     copy: {
       clubName: "SUSHIPRO CLUB",

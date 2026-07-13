@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { VideoAmbiente } from "@/components/VideoAmbiente";
 import { CUPON, EXPOVINO } from "@/lib/expovino";
 
 // =========================================================
@@ -23,9 +24,19 @@ export default function CuponExpovinoPage() {
 
   return (
     <div
-      className="flex min-h-dvh flex-col items-center justify-center px-6 py-10 text-center"
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-10 text-center"
       style={{ backgroundColor: C.fondo, color: C.crema }}
     >
+      {/* Celebración de fondo — solo cuando el premio está desbloqueado */}
+      {usuario && gano && (
+        <>
+          <VideoAmbiente src="/expovino-cupon.mp4" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-b from-[#2a0a14]/60 via-[#2a0a14]/40 to-[#2a0a14]/85"
+          />
+        </>
+      )}
       {!usuario || !gano ? (
         <>
           <p className="text-5xl">🔒</p>
@@ -48,7 +59,7 @@ export default function CuponExpovinoPage() {
       ) : (
         <>
           <p
-            className="text-[10px] font-semibold uppercase tracking-[0.3em]"
+            className="relative text-[10px] font-semibold uppercase tracking-[0.3em]"
             style={{ color: C.oro }}
           >
             Pasaporte completo · premio desbloqueado
@@ -56,7 +67,7 @@ export default function CuponExpovinoPage() {
 
           {/* El cupón — estilo ticket con borde punteado dorado */}
           <div
-            className="mt-6 w-full max-w-sm rounded-[2rem] p-8"
+            className="relative mt-6 w-full max-w-sm rounded-[2rem] p-8"
             style={{
               backgroundColor: C.carta,
               border: `2px dashed ${C.oro}`,
@@ -87,14 +98,14 @@ export default function CuponExpovinoPage() {
             </p>
           </div>
 
-          <p className="mt-5 max-w-[32ch] text-[12px] opacity-60">
+          <p className="relative mt-5 max-w-[32ch] text-[12px] opacity-60">
             Muestra esta pantalla en la barra. El código es único de tu
             pasaporte.
           </p>
 
           <Link
             href="/expovino"
-            className="mt-6 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider opacity-60"
+            className="relative mt-6 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider opacity-60"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Volver al pasaporte

@@ -134,6 +134,8 @@ export interface VendorTheme {
   goldForegroundHsl?: string;
   logoUrl: string; // ruta relativa o URL absoluta
   logoWidth: number; // px, alto se calcula por ratio del SVG
+  /** Video de portada del hero del home (feature premium, Growth+). */
+  heroVideoUrl?: string;
 }
 
 /** Copies white-label del tenant. */

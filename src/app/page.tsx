@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { PunchCard } from "@/components/PunchCard";
 import { RangoBadge } from "@/components/RangoBadge";
+import { VideoAmbiente } from "@/components/VideoAmbiente";
 import { PremioCard } from "@/components/PremioCard";
 import { NotifBanner } from "@/components/NotifBanner";
 import { MediaSlot } from "@/components/MediaSlot";
@@ -123,6 +124,16 @@ export default function HomePage() {
         className="relative overflow-hidden rounded-3xl p-6 text-white shadow-lg"
         style={{ backgroundColor: vendor.theme.primaryColor }}
       >
+        {/* Video de portada — feature premium por tenant (Growth+) */}
+        {vendor.theme.heroVideoUrl && (
+          <>
+            <VideoAmbiente src={vendor.theme.heroVideoUrl} />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/20"
+            />
+          </>
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10"

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { VideoAmbiente } from "@/components/VideoAmbiente";
 import { EXPOVINO } from "@/lib/expovino";
 
 // =========================================================
@@ -99,11 +100,21 @@ export default function SorteoExpovinoPage() {
 
   return (
     <div
-      className="flex min-h-dvh flex-col items-center justify-center px-6 py-10 text-center"
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-10 text-center"
       style={{ backgroundColor: C.fondo, color: C.crema }}
     >
+      {/* Lluvia dorada de fondo en el momento del ganador */}
+      {fase === "ganador" && (
+        <>
+          <VideoAmbiente src="/expovino-sorteo.mp4" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-b from-[#2a0a14]/50 via-[#2a0a14]/30 to-[#2a0a14]/70"
+          />
+        </>
+      )}
       <p
-        className="text-[12px] font-semibold uppercase tracking-[0.34em]"
+        className="relative text-[12px] font-semibold uppercase tracking-[0.34em]"
         style={{ color: C.oro }}
       >
         {EXPOVINO.nombre} · Sorteo en vivo
@@ -156,7 +167,7 @@ export default function SorteoExpovinoPage() {
       )}
 
       {fase === "ganador" && ganador && (
-        <div className="animate-in zoom-in fade-in duration-700">
+        <div className="relative animate-in zoom-in fade-in duration-700">
           <p className="mt-8 text-[80px] leading-none">🏆</p>
           <h1
             className="mt-4 font-headline text-[clamp(40px,8vw,88px)] font-black leading-[1.02]"
@@ -181,7 +192,7 @@ export default function SorteoExpovinoPage() {
         </div>
       )}
 
-      <p className="mt-12 text-[10px] uppercase tracking-[0.24em] opacity-40">
+      <p className="relative mt-12 text-[10px] uppercase tracking-[0.24em] opacity-40">
         Desarrollado por SynapTech
       </p>
     </div>
