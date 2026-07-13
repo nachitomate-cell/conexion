@@ -44,6 +44,20 @@ function UneteInner() {
   const [tab, setTab] = useState("login");
   const [busy, setBusy] = useState(false);
 
+  // ── Modo ExpoVino: registro con el branding del evento ──
+  // Se activa al venir del pasaporte (next=/expovino...) o desde el host
+  // del evento. En ese caso el tab inicial es "Crear cuenta" (el visitante
+  // del evento casi siempre es nuevo).
+  const nextParam = params.get("next") || "";
+  const [hostExpovino, setHostExpovino] = useState(false);
+  useEffect(() => {
+    setHostExpovino(window.location.hostname.startsWith("expovino."));
+  }, []);
+  const esExpovino = hostExpovino || nextParam.startsWith("/expovino");
+  useEffect(() => {
+    if (esExpovino) setTab("registro");
+  }, [esExpovino]);
+
   // login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -122,11 +136,24 @@ function UneteInner() {
   };
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-5 py-10">
+    <div
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-5 py-10"
+      style={
+        esExpovino
+          ? // Fondo burdeos del evento + botones/acentos en oro (pisa --primary).
+            ({
+              backgroundColor: "#2a0a14",
+              "--primary": "38 66% 55%",
+              "--ring": "38 66% 55%",
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       {/* Loop de ambiente — una sola capa a pantalla completa: sin costuras
           ni barras. El sujeto va centrado con aire arriba, así que el recorte
           de los bordes es imperceptible en cualquier proporción. */}
       <video
+        key={esExpovino ? "expovino" : "tenant"}
         autoPlay
         muted
         loop
@@ -134,30 +161,53 @@ function UneteInner() {
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
       >
-        <source src="/unete-loop.mp4" type="video/mp4" />
+        <source
+          src={esExpovino ? "/expovino-loop.mp4" : "/unete-loop.mp4"}
+          type="video/mp4"
+        />
       </video>
       {/* Velo suave — deja ver el video y mantiene el texto legible. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-background/45 via-background/35 to-background/75"
+        className={
+          esExpovino
+            ? "absolute inset-0 bg-gradient-to-b from-[#2a0a14]/70 via-[#2a0a14]/55 to-[#2a0a14]/95"
+            : "absolute inset-0 bg-gradient-to-b from-background/45 via-background/35 to-background/75"
+        }
       />
 
-      <div className="relative mb-6 flex flex-col items-center text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={vendor.theme.logoUrl}
-          alt={vendor.nombre}
-          width={vendor.theme.logoWidth * 1.4}
-          height={64}
-          className="h-16 w-auto"
-        />
-        <p className="mt-3 font-headline text-sm font-bold uppercase tracking-[0.35em] text-muted-foreground">
-          {vendor.copy.clubName}
-        </p>
-        <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-          {vendor.copy.joinDescription} {vendor.copy.emojis}
-        </p>
-      </div>
+      {esExpovino ? (
+        <div className="relative mb-6 flex flex-col items-center text-center text-[#f6ece0]">
+          <span className="text-5xl">🍷</span>
+          <p className="mt-3 font-headline text-[26px] font-black leading-tight tracking-tight">
+            Pasaporte ExpoVino
+          </p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#d9a441]">
+            Invierno 2026 · 15 años
+          </p>
+          <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#f6ece0]/70">
+            Crea tu cuenta gratis y parte a timbrar stands. Tu cava y el
+            sorteo te esperan 🎟️
+          </p>
+        </div>
+      ) : (
+        <div className="relative mb-6 flex flex-col items-center text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={vendor.theme.logoUrl}
+            alt={vendor.nombre}
+            width={vendor.theme.logoWidth * 1.4}
+            height={64}
+            className="h-16 w-auto"
+          />
+          <p className="mt-3 font-headline text-sm font-bold uppercase tracking-[0.35em] text-muted-foreground">
+            {vendor.copy.clubName}
+          </p>
+          <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+            {vendor.copy.joinDescription} {vendor.copy.emojis}
+          </p>
+        </div>
+      )}
 
       {permissionError && firebaseUser && (
         <div className="relative mb-4 w-full max-w-sm rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
@@ -285,7 +335,12 @@ function UneteInner() {
         </Tabs>
       </div>
 
-      <p className="relative mt-5 max-w-xs text-center text-xs text-muted-foreground">
+      <p
+        className={
+          "relative mt-5 max-w-xs text-center text-xs " +
+          (esExpovino ? "text-[#f6ece0]/60" : "text-muted-foreground")
+        }
+      >
         Al continuar aceptas nuestros{" "}
         <Link href="/terminos" className="underline">
           términos
