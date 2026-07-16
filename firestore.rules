@@ -92,5 +92,26 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // --- WhatsApp (canal Evolution): estado del canal por vendor ---
+    // Lectura de staff (la UI muestra estado/QR); toda escritura va por Admin SDK.
+    match /wa_config/{vendorId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    // --- Envíos, opt-outs y métricas: solo server (Admin SDK ignora estas reglas) ---
+    match /wa_sends/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /wa_optout/{tel} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+    match /_metrics/{doc} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
   }
 }

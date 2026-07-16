@@ -3,6 +3,7 @@
   "crons": [
     { "path": "/api/cron/daily-notifications", "schedule": "0 13 * * *" },
     { "path": "/api/cron/afternoon-notifications", "schedule": "0 19 * * *" },
-    { "path": "/api/cron/daily-tasks", "schedule": "0 12 * * *" }
+    { "path": "/api/cron/daily-tasks", "schedule": "0 12 * * *" },
+    { "path": "/api/cron/reactivacion", "schedule": "0 16 * * *" }
   ]
 }
