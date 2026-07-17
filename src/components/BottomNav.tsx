@@ -54,7 +54,7 @@ export function BottomNav() {
   const brand = vendor.theme.primaryColor;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur-md">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur-md lg:hidden">
       <div className="mx-auto flex max-w-xl items-end justify-around px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
         {items.map((item) => {
           const href = item.href.split("?")[0];

@@ -330,6 +330,8 @@ export interface Vendor {
   rubro?: ProspectoRubro;
   /** Zona/barrio para el directorio del marketplace. */
   zona?: string;
+  /** Suscrito al plan "Primera Fila" — aparece destacado en /explora. */
+  destacado?: boolean;
   /** true = tenant de demostración: se muestra en demos, desactivar en prod. */
   demo?: boolean;
   theme: VendorTheme;

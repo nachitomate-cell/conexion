@@ -73,25 +73,100 @@ export function vendorHomeUrl(v: Vendor): string {
 }
 
 /**
- * Redes hermanas de SynapTech — federación nivel 1: el marketplace enlaza
- * a las apps existentes (proyectos Firebase separados) mientras no exista
- * cuenta unificada. Aparecen como tarjetas al final de /explora.
+ * Categorías del banner "Grandes Alianzas y Circuitos".
+ * Se pintan en la píldora superior de cada tarjeta.
  */
-export const REDES_EXTERNAS = [
+export type RedCategoria =
+  | "Club Comercial"
+  | "Mega Club Recreativo"
+  | "Ruta Gastronómica"
+  | "Ruta Cultural"
+  | "Evento Premium";
+
+/**
+ * Red hermana del portal (proyecto Firebase separado). Cada una es un
+ * circuito grande de la Quinta Región con identidad propia.
+ *
+ * `bgImage` es el path canónico a la portada. Hoy puede ser un `.webp`
+ * en `/public`; mañana un `storagePath` de Firebase Storage que se
+ * resuelve con `useFirebaseImage()`. El componente no necesita cambiar.
+ */
+export interface RedExterna {
+  id: string;
+  nombre: string;
+  emoji: string;
+  descripcion: string;
+  url: string;
+  badge: RedCategoria;
+  /**
+   * Ruta a la imagen de portada (`.webp` idealmente).
+   * Se admite: URL absoluta, `/public/...`, o `storagePath` estilo
+   * Firebase Storage (`redes/patio-curauma.webp`) — este último se
+   * resolverá en el hook cuando exista el panel de admin.
+   */
+  bgImage: string;
+  /** Color de marca — sirve de fondo mientras carga la imagen. */
+  accentColor: string;
+  /**
+   * Zona de cobertura — se pinta como kicker sobre el título de la
+   * tarjeta y da contexto geográfico (útil ahora que hay alianzas
+   * fuera de la Quinta Región).
+   */
+  zonaCobertura?: string;
+}
+
+/**
+ * Redes hermanas de SynapTech — federación nivel 1: el marketplace
+ * enlaza a las apps existentes (proyectos Firebase separados) mientras
+ * no exista cuenta unificada. Aparecen como banner al final de /explora.
+ */
+export const REDES_EXTERNAS: RedExterna[] = [
   {
     id: "clubpatiocurauma",
     nombre: "Club Patio Curauma",
     emoji: "🏞️",
     descripcion:
-      "El club del patio: sellos, premios y emprendedores de Curauma.",
+      "El club del patio: sellos, premios y emprendedores del centro comercial más querido de Curauma.",
     url: "https://clubpatiocurauma.synaptechspa.cl/",
+    badge: "Club Comercial",
+    bgImage: "/assets/redes/patio-curauma.webp",
+    accentColor: "#0a6b4d",
+    zonaCobertura: "Curauma · Valparaíso",
+  },
+  {
+    id: "club-providencia",
+    nombre: "Club Providencia",
+    emoji: "🎳",
+    descripcion:
+      "Club deportivo y recreativo familiar: Restaurante, Bowling, Masajes, Deportes y Shows en vivo para todos.",
+    url: "https://clubprovidencia.synaptechspa.cl/",
+    badge: "Mega Club Recreativo",
+    bgImage: "/assets/redes/club-providencia.webp",
+    accentColor: "#0f3a4d",
+    zonaCobertura: "Providencia · Santiago",
+  },
+  {
+    id: "expovino",
+    nombre: "Expovino Valparaíso",
+    emoji: "🍇",
+    descripcion:
+      "El festival de las viñas del valle. Catas, maridajes, música en vivo y sellos que se transforman en botellas.",
+    url: "/expovino",
+    badge: "Evento Premium",
+    bgImage: "/assets/redes/expovino.webp",
+    accentColor: "#3a1548",
+    zonaCobertura: "Valle de Casablanca",
   },
   {
     id: "ruta-bac",
     nombre: "Ruta BAC · Valparaíso",
     emoji: "🍷",
     descripcion:
-      "26 bares y cocinas de los cerros Alegre y Concepción. Tapa + cóctel x $6.000.",
+      "26 bares y cocinas patrimoniales de los cerros Alegre y Concepción. Tapa + cóctel por $6.000.",
     url: "https://clubpatiocurauma.synaptechspa.cl/ruta-bac",
+    badge: "Ruta Gastronómica",
+    bgImage: "/assets/redes/ruta-bac.webp",
+    accentColor: "#7a1e1e",
+    zonaCobertura: "Cerros Alegre y Concepción",
   },
-] as const;
+];

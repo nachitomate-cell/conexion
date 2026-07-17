@@ -203,6 +203,20 @@ export function getDefaultVendor(): Vendor {
   return VENDORS[DEFAULT_VENDOR_ID];
 }
 
+/**
+ * Busca un vendor por su `slug` (parte legible de la URL, ej. `sushipro`,
+ * `nene`, `barberiafaro`). Se usa para resolver `/club/[slug]`.
+ * Devuelve `null` si no hay match.
+ */
+export function getVendorBySlug(slug: string): Vendor | null {
+  if (!slug) return null;
+  const clean = slug.trim().toLowerCase();
+  for (const v of Object.values(VENDORS)) {
+    if (v.slug.toLowerCase() === clean) return v;
+  }
+  return null;
+}
+
 /** Payload que codifica el QR del local para el escaneo del cliente. */
 export function buildVendorQRValue(vendorId: string): string {
   return `SUSHIPRO::VENDOR::${vendorId}`;

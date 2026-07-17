@@ -3,15 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { MapPin } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { PremioCard } from "@/components/PremioCard";
+import { useVendor } from "@/context/VendorContext";
+import { PremioVitrinaCard } from "@/components/PremioVitrinaCard";
 import { RangoBadge } from "@/components/RangoBadge";
 import {
   Dialog,
@@ -25,12 +22,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { canjearPremio } from "@/lib/puntos";
 import { buildCanjeQRValue } from "@/lib/vendors";
-import { useVendor } from "@/context/VendorContext";
+import { cn } from "@/lib/utils";
 import type { Premio } from "@/types";
 
-// Vista previa que se muestra mientras la colección `premios` esté vacía.
-// En cuanto el admin crea el primer premio real desde /admin, desaparece.
-// Cada tenant define su propio set; si no está mapeado se usa el de SushiPro.
+// =========================================================
+// Centro de Recompensas — grilla responsiva de premios con
+// tabs (Todos / Canjeables / En progreso). Mientras la
+// federación multi-tenant no exista, todos los premios vienen
+// del vendor actual — el badge del club sirve como pista visual
+// para cuando la vista sea inter-club.
+// =========================================================
+
+// Vista previa: se muestra mientras `premios` esté vacío para
+// que el admin vea la maqueta cargada. Se apaga solo al crear
+// el primer premio real.
 const DEMO_POR_VENDOR: Record<string, Omit<Premio, "vendorId">[]> = {
   sushipro: [
     {
@@ -48,6 +53,15 @@ const DEMO_POR_VENDOR: Record<string, Omit<Premio, "vendorId">[]> = {
       icono: "🍣",
       descripcion: "Elige cualquier roll clásico de la carta.",
       sellosRequeridos: 10,
+      stock: 999,
+      activo: true,
+    },
+    {
+      id: "__demo_helado",
+      nombre: "Tempura Ice Cream",
+      icono: "🍨",
+      descripcion: "Helado tempurizado con salsa de matcha.",
+      sellosRequeridos: 15,
       stock: 999,
       activo: true,
     },
@@ -104,7 +118,8 @@ const DEMO_POR_VENDOR: Record<string, Omit<Premio, "vendorId">[]> = {
       id: "__demo_lomo",
       nombre: "Lomo Saltado",
       icono: "🍛",
-      descripcion: "Lomo salteado al wok con papas fritas y arroz graneado.",
+      descripcion:
+        "Lomo salteado al wok con papas fritas y arroz graneado.",
       sellosRequeridos: 12,
       stock: 999,
       activo: true,
@@ -115,6 +130,78 @@ const DEMO_POR_VENDOR: Record<string, Omit<Premio, "vendorId">[]> = {
 function demoPremios(vendorId: string): Premio[] {
   const list = DEMO_POR_VENDOR[vendorId] ?? DEMO_POR_VENDOR.sushipro;
   return list.map((p) => ({ ...p, vendorId }));
+}
+
+type TabId = "todos" | "canjeables" | "progreso";
+
+function VistaPreviaBanner() {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-[13px] text-indigo-900">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[18px]">
+        🍱
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">Vista previa de premios</p>
+        <p className="text-[12px] text-indigo-800/75">
+          Este club aún no publica premios reales. Los que ves son de muestra —
+          crea los definitivos desde{" "}
+          <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-indigo-900">
+            /admin
+          </code>
+          .
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  accent,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  accent?: "emerald";
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-all active:scale-[0.98]",
+        active
+          ? accent === "emerald"
+            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+            : "bg-foreground text-background"
+          : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.06]"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function EmptyState({ tab }: { tab: TabId }) {
+  const cfg = {
+    todos: { emoji: "🎁", msg: "Este club aún no publica premios." },
+    canjeables: {
+      emoji: "🎯",
+      msg: "Aún no tienes premios listos para canjear. Junta más sellos.",
+    },
+    progreso: {
+      emoji: "🏁",
+      msg: "No hay premios en progreso ahora mismo.",
+    },
+  }[tab];
+  return (
+    <div className="col-span-full rounded-2xl bg-slate-50 p-16 text-center ring-1 ring-slate-100">
+      <p className="text-5xl">{cfg.emoji}</p>
+      <p className="mt-3 text-[14px] text-slate-600">{cfg.msg}</p>
+    </div>
+  );
 }
 
 export default function PremiosPage() {
@@ -129,6 +216,7 @@ export default function PremiosPage() {
     canjeId: string;
     nombre: string;
   } | null>(null);
+  const [tab, setTab] = useState<TabId>("todos");
 
   useEffect(() => {
     const q = query(
@@ -178,47 +266,120 @@ export default function PremiosPage() {
   const esVistaPrevia = premios !== null && ordenados.length === 0;
   const paraMostrar = esVistaPrevia ? demoPremios(vendor.id) : ordenados;
 
+  const canjeables = useMemo(
+    () =>
+      paraMostrar.filter(
+        (p) => sellos >= p.sellosRequeridos && p.stock > 0
+      ),
+    [paraMostrar, sellos]
+  );
+  const enProgreso = useMemo(
+    () => paraMostrar.filter((p) => sellos < p.sellosRequeridos),
+    [paraMostrar, sellos]
+  );
+
+  const visibles = useMemo(() => {
+    if (tab === "canjeables") return canjeables;
+    if (tab === "progreso") return enProgreso;
+    return paraMostrar;
+  }, [tab, canjeables, enProgreso, paraMostrar]);
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-xl space-y-8 px-4 md:max-w-4xl md:px-6 lg:max-w-6xl lg:px-8">
+      {/* ── Hero ── */}
+      <header className="flex flex-col items-start gap-4 pt-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-bold">Premios 🎁</h1>
-          <p className="text-sm text-muted-foreground">
-            Tienes {sellos} sellos para canjear.
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground/70">
+            Centro de Recompensas
+          </p>
+          <h1 className="mt-2 font-headline text-[32px] font-black leading-none tracking-tight md:text-[42px]">
+            Premios 🎁
+          </h1>
+          <p className="mt-3 text-[14px] text-muted-foreground md:text-[15px]">
+            Tienes{" "}
+            <span className="font-bold tabular-nums text-foreground">
+              {sellos}
+            </span>{" "}
+            sellos disponibles para canjear.
           </p>
         </div>
         {usuario && (
-          <RangoBadge sellosHistoricos={usuario.sellosHistoricos || 0} />
+          <RangoBadge
+            sellosHistoricos={usuario.sellosHistoricos || 0}
+            variant="rank"
+          />
         )}
+      </header>
+
+      {/* ── Vista previa (solo si no hay premios reales todavía) ── */}
+      {esVistaPrevia && <VistaPreviaBanner />}
+
+      {/* ── Tabs + selector de club ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <TabButton active={tab === "todos"} onClick={() => setTab("todos")}>
+          Todos los premios · {paraMostrar.length}
+        </TabButton>
+        <TabButton
+          active={tab === "canjeables"}
+          onClick={() => setTab("canjeables")}
+          accent="emerald"
+        >
+          ✨ Canjeables ahora · {canjeables.length}
+        </TabButton>
+        <TabButton
+          active={tab === "progreso"}
+          onClick={() => setTab("progreso")}
+        >
+          En progreso · {enProgreso.length}
+        </TabButton>
+
+        {/*
+          TODO(federación): cuando /premios agregue Firestore de todos los
+          vendors donde el usuario tiene sellos, este pill se vuelve un
+          <Select> con la lista y `setVendorFiltro`. Hoy es informativo.
+        */}
+        <div className="ml-auto hidden items-center gap-2 rounded-full bg-black/[0.04] px-3 py-1.5 text-[12px] text-muted-foreground md:flex">
+          <MapPin className="h-3.5 w-3.5" />
+          <span>
+            Club:{" "}
+            <span className="font-semibold text-foreground">
+              {vendor.nombre}
+            </span>
+          </span>
+        </div>
       </div>
 
+      {/* ── Grilla ── */}
       {premios === null ? (
-        <div className="space-y-3">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-72 w-full rounded-2xl" />
+          <Skeleton className="h-72 w-full rounded-2xl" />
+          <Skeleton className="h-72 w-full rounded-2xl" />
         </div>
       ) : (
-        <div className="space-y-3">
-          {esVistaPrevia && (
-            <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
-              <span className="font-semibold">🍱 Vista previa</span>
-              <span className="text-primary/80">
-                Aún no hay premios publicados. Crea los reales desde /admin.
-              </span>
-            </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {visibles.length === 0 ? (
+            <EmptyState tab={tab} />
+          ) : (
+            visibles.map((p) => (
+              <PremioVitrinaCard
+                key={p.id}
+                premio={p}
+                sellosActuales={sellos}
+                vendorNombre={vendor.nombre}
+                vendorZona={vendor.zona}
+                vendorEmoji={vendor.emoji}
+                vendorColor={vendor.theme.primaryColor}
+                verLocalUrl="/"
+                onCanjear={esVistaPrevia ? undefined : handleCanjear}
+                loading={canjeandoId === p.id}
+              />
+            ))
           )}
-          {paraMostrar.map((p) => (
-            <PremioCard
-              key={p.id}
-              premio={p}
-              sellosActuales={sellos}
-              onCanjear={esVistaPrevia ? undefined : handleCanjear}
-              loading={canjeandoId === p.id}
-            />
-          ))}
         </div>
       )}
 
+      {/* ── Voucher post-canje ── */}
       <Dialog open={!!voucher} onOpenChange={(v) => !v && setVoucher(null)}>
         <DialogContent className="max-w-xs text-center">
           <DialogHeader>
